@@ -1,0 +1,9 @@
+name: cbpro
+dependencies:
+- python>=3.5
+- kx::embedPy=1.3.1
+- openssl=1.0.2
+- pip
+- pip:
+  - pyment
+  - "git+https://github.com/michaelsimonelli/qoinbase-py.git"
