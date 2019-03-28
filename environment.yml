@@ -1,7 +1,6 @@
-name: cbpro
+name: qbpro
 dependencies:
 - python>=3.5
-- kx::embedPy=1.3.1
 - msimonelli::extendPy
 - openssl=1.0.2
 - pip
