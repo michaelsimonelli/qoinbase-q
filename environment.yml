@@ -1,4 +1,6 @@
 name: cbpro
+channels:
+    - kx
 dependencies:
 - python>=3.5
 - msimonelli::extendPy
