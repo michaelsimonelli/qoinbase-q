@@ -25,6 +25,16 @@
 // Market Data Client
 .mkt.CLI:();
 
+// Client instance flag
+.mkt.inst:0b;
+
+// Init market data client
+.mkt.init:{[cli]
+  .mkt.CLI:cli;
+  .ref.cache[`mkt][];
+  .mkt.inst:1b;
+  `.mkt.CLI};
+
 ///
 // List known currencies
 //
@@ -314,31 +324,6 @@
   book: @[book;`asks; cast$/:];
   book};
 
-
-
-
-.ord.placeMarketOrder[`BTCUSD;`buy;0.001]
-
-.ord.placeMarketOrder[`BTCUSD;`sell;10]
-.ord.placeLimitOrder[`BTCUSD;`buy;0.02;0.1]
-r:.mkt.getProductOrderBook[`BTCUSD;3]
-r`bids
-r`asks
-1113f073-d036-4796-8e98-a98d8597e5f6 ETH      999999.7 999999.7  0    7645849f-1de8-46df-af97-38865f0e3876
-b005a81d-6506-4d07-9e90-518224497160 BTC      999874.2 999874.2  0    7645849f-1de8-46df-af97-38865f0e3876
-\c 500 500
-cba[]
-.ord.CLI.coinbase_deposit[10.00;`USD;"1b4b4fbc-8071-5e7c-b36e-a1c589a2cf20"]
-.ord.CLI.get_coinbase_accounts[]
-.ord.CLI.get_payment_methods[][1]
-.ord.CLI.deposit["210.00";"USD";"e49c8d15-547b-464e-ac3d-4b9d20b360ec"]
-cba:.ord.CLI.get_coinbase_accounts[]
-cba[4]
-f263ca75-4db0-4cd9-bd6f-3bbd873d1c5a
-.ord.getFills[`BTCUSD;`;`]
-.ord.getAccountHistory[`USD;`]
-.ord.getFills[`BTCUSD;`;`]
-
 ///////////////////////////////////////
 // REFERENCE DATA                    //
 ///////////////////////////////////////
@@ -347,22 +332,27 @@ f263ca75-4db0-4cd9-bd6f-3bbd873d1c5a
 // Initialize reference data
 .ref.cache.mkt:{[]
   // Currency data
-  .ref.ccy: .mkt.CLI.getCurrencies[];
+  .ref.ccy: .mkt.getCurrencies[];
   // Product data
-  .ref.products: .mkt.CLI.getProducts[];
+  .ref.p2: .mkt.getProducts[];
   
-  .ref.ccyList: exec id from .ref.ccy;
+  .ref.ccys: exec id from .ref.ccy;
   
-  .ref.symList: exec sym from .ref.products;
+  .ref.syms: exec sym from .ref.p2;
   
-  .ref.pidList: exec id from .ref.products;
+  .ref.pids: exec id from .ref.p2;
   };
-
+  
 ///
 // Initialize reference data
 .ref.cache.ord:{[]
   .ref.accounts: .ord.getAccounts[];
   };
+
+///
+// Cast guid to string
+// Useful in API, as underlying python doesn't like guid types
+.ref.castID:{$[.ut.isGuid x;string;]x};
 
 ///
 // Gets correct productID format
@@ -373,7 +363,7 @@ f263ca75-4db0-4cd9-bd6f-3bbd873d1c5a
 //
 // returns:
 // x [sym] - formatted productID (`BTC-USD)
-.ref.getPID:{s:.Q.id $[.ut.isStr x; `$; ]x; .ref.products[s; `id]};
+.ref.getPID:{s:.Q.id $[.ut.isStr x; `$; ]x; .ref.p2[s; `id]};
 
 ///
 // Resolves accountID by currency or ID
@@ -382,8 +372,6 @@ f263ca75-4db0-4cd9-bd6f-3bbd873d1c5a
 // x [symbol/string] - ccy or accountID
 .ref.getAccID:{[x]
   id: $[.ut.isSym x;
-        (x; ?[.ref.accounts; enlist(=; `currency; enlist x); (); ()]`id)(x in .ref.ccyList);
+        (x; ?[.ref.accounts; enlist(=; `currency; enlist x); (); ()]`id)(x in .ref.ccys);
           .ut.isStr x; x; string x];
   id};
-
-.ref.orderTemp: `id`price`size`product_id`side`type`time_in_force`post_only`created_at`done_at`done_reason`fill_fees`filled_size`executed_value`status`settled`funds`specified_funds`stop`stop_price`stp!"SFFSSSSb**SFFFSbFFSFS";

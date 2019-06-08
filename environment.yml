@@ -1,4 +1,4 @@
-name: qbpro
+name: cbpro
 dependencies:
 - python>=3.5
 - msimonelli::extendPy

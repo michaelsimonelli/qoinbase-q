@@ -2,6 +2,8 @@
 
 .ut.isStr:{ 10h = type x };
 
+.ut.isGuid:{ -2h = type x };
+
 .ut.isAtom:{ (0h > type x) and (-20h < type x) };
 
 .ut.isList:{ (0h <= type x) and (20h > type x) };
@@ -14,25 +16,21 @@
 
 .ut.isNull:{ $[.ut.isAtom[x] or .ut.isList[x] or x ~ (::); $[.ut.isGList[x]; all .ut.isNull each x; all null x]; .ut.isTable[x] or .ut.isDict[x];$[count x;0b;1b];0b ] };
 
-/ .ut.enlist:{ $[not .ut.isList x;enlist x; x] };
+.ut.toStr:{if[.ut.isStr x; :x]; string x};
 
-/ .ut.raze:{ $[.ut.isList x; [tmp:raze x; $[1 = count tmp; first tmp; tmp] ]; x] };
+.ut.enlist:{ $[not .ut.isList x;enlist x; x] };
 
-/ .ut.repeat:{ (.ut.enlist x)!count[x]#enlist[y] };
+.ut.raze:{ $[.ut.isList x; [tmp:raze x; $[1 = count tmp; first tmp; tmp] ]; x] };
 
-/ .ut.dict:{ (!/) flip $[not all .ut.isRList each x; enlist;]x };
-
-/ .ut.table:{ x[0]!/:1_x };
-
-/ .ut.eachKV:{key [x]y'x};
-
-/ .ut.exists:{not () ~ key x};
+.ut.repeat:{ .ut.enlist[x]!count[x]#y };
 
 .ut.cast:{ x $ { $[(::)~x; string;] x} each y };
 
-.ut.defn:{$[.ut.isNull x; y; x]};
+.ut.default:{ $[.ut.isNull x; y; x] };
 
-.ut.overload:{ (')[x; enlist] };
+.ut.xfunc:{ (')[x; enlist] };
+
+.ut.xposi:{ .ut.assert[not .ut.isNull x y; "positional argument (",(y$:),") '",(z$:),"' required"]; x y};
 
 .ut.assert:{ [x;y] if[not x;'"Assert failed: ",y] };
 
@@ -42,13 +40,9 @@
   iso:-6 _ .h.iso8601 "j"$qtime;
   iso};
 
-.ut.iso2Q:{ "Z"$ $[24<>ct:count x;ssr[x;"Z";(23;22;20)!("0Z";"00Z";".000Z") ct];x]};
+.ut.iso2Q:{ if[not .ut.isNull t:"Z"$x;:t]; "Z"$ $[24<>ct:count x;ssr[x;"Z";((23;22;20)!("0Z";"00Z";".000Z"))ct]; x] };
 
 .ut.epo2Q:{`datetime$(x % 86400) - 10957f};
-
-/.ut.iso2Q:{ "Z"$ $[24<>ct:count x;ssr[x;"Z";.ut.iso.mapfix ct];x]};
-/.ut.epo2Q:{`datetime$(x % .ut.epo.secondsInDay) - .ut.epo.dateTimeDiff}
-
 
 
 

@@ -14,8 +14,15 @@
 // Order Management Client
 .ord.CLI:();
 
+// Client instance flag
+.ord.inst:0b;
 
-.sim.exmp:{[t]mt:meta t;ks:keys t;et:exec from t;update k:?[c in ks;`y;`],e:et[c] from mt}
+// Init market data client
+.ord.init:{[cli]
+  .ord.CLI:cli;
+  .ref.cache[`ord][];
+  .ord.inst:1b;
+  `.ord.CLI};
 
 ///
 // Get a list of trading accounts.
@@ -46,13 +53,13 @@
   res: .ord.CLI.get_accounts[];
   accounts: "GSFFFG"$/:res;
   accounts};
-0ng
+
 ///
 // Information for a single account. Request by account_id or ccy.
 //
 // example:
 // q) .ord.getAccount[`USD]
-// q) .ord.getAccount["a1b2c3d4"]
+// q) .ord.getAccount["00000000-0000-0000-0000-000000000000"]
 //
 // parameters:
 // x  [symbol/string] - account_id or currency of account to get data from
@@ -70,7 +77,7 @@
 //  api - https://docs.pro.coinbase.com/#get-an-account
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L37
 .ord.getAccount:{[x]
-  id: .ref.getAccID[x];
+  id: .ref.castID .ref.getAccID x;
   res: .ord.CLI.get_account[id];
   account: $[`message in key res; 'res`message; "GSFFFG"$res];
   account};
@@ -79,21 +86,18 @@
 // List account activity. Account activity either increases or
 // decreases your account balance.
 //
-// Entry type indicates the reason for the account change.
-// * transfer:   Funds moved to/from Coinbase to cbpro
-// * match:      Funds moved as a result of a trade
-// * fee:        Fee as a result of a trade
-// * rebate:     Fee rebate as per our fee schedule
-// * conversion: Funds converted between fiat currency and a stablecoin
-//
 // example:
 // q) .ord.getAccountHistory[`USD;`fee]
-// q) .ord.getAccountHistory["a1b2c3d4";`match]
+// q) .ord.getAccountHistory["00000000-0000-0000-0000-000000000000";`match]
 //
 // parameters:
-// x  [symbol/string] - account_id or currency of account to get data from
-// t  [sym] - type/reason for account change, filters results, returns all types if null
-//
+// x  [symbol/string/guid] - AccountID or CCY of account to get data from
+// t  [sym] - Type/reason for account change, filters results, returns all types if null
+//            * transfer: Funds moved to/from Coinbase to cbpro
+//            * match:  Funds moved as a result of a trade
+//            * fee:      Fee as a result of a trade
+//            * rebate:   Fee rebate as per our fee schedule
+// 
 // returns:
 // accHist [table] - History information for the account
 // c         | t f a k e                                                                                      
@@ -109,7 +113,7 @@
 //  api - https://docs.pro.coinbase.com/#get-account-history
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L85
 .ord.getAccountHistory:{[x;t]
-  id: .ref.getAccID[x];
+  id: .ref.castID .ref.getAccID x;
   res: $[.ut.isNull t; .ord.CLI.get_account_history id; .ord.CLI.get_account_history[id; `type pykw t]];
   accHist: .py.list[res];
   accHist: "ZjFFS*"$/:accHist;
@@ -121,10 +125,10 @@
 //
 // example:
 // q) .ord.getAccountHistoryDetails[`USD]
-// q) .ord.getAccountHistoryDetails["a1b2c3d4"]
+// q) .ord.getAccountHistoryDetails["00000000-0000-0000-0000-000000000000"]
 //
 // parameters:
-// x  [symbol/string] - account_id or currency of account to get data from
+// x  [symbol/string/guid] - AccountID or CCY of account to get data from
 //
 // returns:
 // accHist [table] - Detailed trading related history information for the account
@@ -147,7 +151,6 @@
   accHist: ((`details,:) _ res),'details;
   accHist};
 
-
 ///
 // Get holds on an account.
 //
@@ -156,7 +159,7 @@
 // q) .ord.getAccountHolds["a1b2c3d4"]
 //
 // parameters:
-// x  [symbol/string] - account_id or currency of account to get data from
+// x  [symbol/string/guid] - AccountID or CCY of account to get data from
 //
 // returns:
 // holds [table] - Hold information for the account
@@ -172,27 +175,30 @@
 //  api - https://docs.pro.coinbase.com/#get-holds
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L125
 .ord.getAccountHolds:{[x]
-  id: .ref.getAccID[x];
+  id: .ref.castID .ref.getAccID x;
   res: .py.list .ord.CLI.get_account_holds[id];
   holds: $[count res; "ZGFSG"$/:res; :(::)];
   holds};
-0ng
-flls:.ord.getFills[`BTCUSD;"8bf53216-2726-4cf5-920d-1599336454b0";3214116]
-.sim.exmp flls
+
 ///
 // Get a list of recent fills.
 //
 // example:
-// q) .ord.getFills[`BTCUSD;`;`]
-// q) .ord.getFills[`BTCUSD;"a1b2c3d4";3214116]
+// q) .ord.getFills[`BTCUSD]
+// q) .ord.getFills["BTCUSD";3634376]
+// q) .ord.getFills["00000000-0000-0000-0000-000000000000";3634376]
+// q) .ord.getFills[`BTCUSD;"G"$"00000000-0000-0000-0000-000000000000";3571412]
 //
 // parameters:
-// sym    [symbol/string] - ccy pair/product, fetch trades with this product_id
-// ordID  [symbol/string] - order_id, fetch trades with this order_id
-// b4     [long] - trade_id, fetch all trades with greater trade_id (newer fills)
+// sym     [symbol/string] - Limit list to this productID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD").
+// orderID [symbol/string/guid] - Limit list to this orderID.
+// before  [long] - Fetch all trades with greater trade_id (newer fills).
+//
+// *NOTE* Requests without either sym or orderID will be rejected.
+//        Function is overloaded, non-dependent argument count/position.
 //
 // returns:
-// flls [table] - Contain
+// flls [table] - List of fills
 //  c         | t f a k e                                   
 //  ----------| --------------------------------------------
 //  created_at| z       2019.04.15T11:05:08.397             
@@ -209,32 +215,73 @@ flls:.ord.getFills[`BTCUSD;"8bf53216-2726-4cf5-920d-1599336454b0";3214116]
 //  settled   | b       1b                                  
 //  usd_volume| f       2e-05   
 //
-// wraps: get_account_holds
-//  api - https://docs.pro.coinbase.com/#fills
+// wraps: get_fills
+//  api - https://docs.pro.coinbase.com/#list-fills
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L578
-.ord.getFills:{[sym;ordID;b4]
-  arg: `product_id`order_id`before!(.ut.defn[;.py.none] each (sym; ordID; b4)); 
-
-  if[not .py.none~arg[`product_id];
-    arg: @[arg; `product_id; .ref.getPID]];
-
+.ord.getFills: .ut.xfunc {[x]
+  arg: `product_id`order_id`before!(3#.py.none);
+  fn:{if[all .ut.toStr[y] in .Q.n; x[`before]:y];
+      if[36=count .ut.toStr[y];x[`order_id]:.ref.castID y];
+      if[not .ut.isNull p:.ref.getPID y; x[`product_id]:p];x};
+  arg: fn/[arg;x];
   res: .ord.CLI.get_fills[pykwargs arg];
-  tmp: .py.list res;
+  tmp: .py.list res; if[.ut.isNull tmp; :tmp];
   tmp: "*jSGSG*FFFSbF"$/:tmp;
   flls: update .ut.iso2Q'[created_at], raze/[liquidity] from tmp;
-
   flls};
 
-.ord.getOrders:{[sym;status]
-  arg: `product_id`status!(.ut.defn[;.py.none] each (sym; status));
-
-  if[not .py.none~arg[`product_id];
-    arg: @[arg; `product_id; .ref.getPID]];
-
+///
+// List your current open orders.
+//
+// example:
+// q) .ord.getOrders[`BTCUSD]
+// q) .ord.getOrders[`BTCUSD;`active]
+// q) .ord.getOrders[`BTCUSD;`active`open]
+// q) .ord.getOrders[`done]
+//
+// parameters:
+// sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// status [symbol/string] - Limit list of orders to this status or statuses. (`active; `open; `pending)
+//
+// *NOTE* Function is overloaded, non-dependent argument count/position.
+//
+// returns:
+// ords [table] - List of orders
+//  c              | t f a k e                                    
+//  ---------------| ---------------------------------------------
+//  id             | g       3c1ed9d7-43b5-4844-8b9c-c4a0a2eca76a
+//  size           | f       0n                                   
+//  product_id     | s       `ETH-USD                             
+//  side           | s       `buy                                 
+//  type           | s       `market                              
+//  post_only      | b       0b                                   
+//  created_at     | z       2018.03.06T09:04:31.741              
+//  done_at        | z       2018.03.06T09:04:31.760              
+//  done_reason    | s       `filled                              
+//  fill_fees      | f       0.2991027                            
+//  filled_size    | f       0.1157966                            
+//  executed_value | f       99.70089                             
+//  status         | s       `done                                
+//  settled        | b       1b                                   
+//  funds          | f       99.7009                              
+//  specified_funds| f       100f                                 
+//  price          | f       0n                                   
+//  time_in_force  | s       `                                    
+//  stop           | s       `                                    
+//  stop_price     | f       0n    
+//  
+// wraps: get_orders
+//  api - https://docs.pro.coinbase.com/#list-orders
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L513
+.ord.getOrders: .ut.xfunc {[x]
+  arg: `product_id`status!(2#.py.none);
+  fn:{if[all y in`active`open`pending; x[`status]:y];
+      if[.ut.isAtom y; if[not .ut.isNull p:.ref.getPID y; x[`product_id]:p]];x};
+  arg: fn/[arg;x];
   res: .ord.CLI.get_orders[pykwargs arg];
   tmp: .py.list res; if[not count tmp; :(::)];
-  ord: (distinct raze(key@/:tmp))#.ref.orderTemp$/:tmp;
-  
+  ord: (distinct raze(key@/:tmp))#.ord.template$/:tmp;
+
   if[`created_at in cols ord;
     ord: update .ut.iso2Q'[created_at] from ord];
   if[`done_at in cols ord;
@@ -242,27 +289,274 @@ flls:.ord.getFills[`BTCUSD;"8bf53216-2726-4cf5-920d-1599336454b0";3214116]
 
   ord};
 
-.ord.getOrder:{[ordID]
-  res: .ord.CLI.get_order[ordID];
-  ord: (key res)#.ref.orderTemp$res;
+///
+// Get a single order by order id.
+//
+// example:
+// q) .ord.getOrder[00000000-0000-0000-0000-000000000000]
+//
+// parameters:
+// orderID [symbol/string/guid] - The order to get information of.
+//
+// returns:
+// ords [dict] - Order information
+//  id            | 00000000-0000-0000-0000-000000000000
+//  price         | 100f
+//  size          | 0.01
+//  product_id    | `BTC-USD
+//  side          | `buy
+//  type          | `limit
+//  time_in_force | `GTC
+//  post_only     | 0b
+//  created_at    | 2019.05.15T08:29:17.078
+//  done_at       | 2019.05.16T09:33:12.539
+//  done_reason   | `filled
+//  fill_fees     | 0f
+//  filled_size   | 0.01
+//  executed_value| 1f
+//  status        | `done
+//  settled       | 1b
+//  
+// wraps: get_order
+//  api - https://docs.pro.coinbase.com/#list-orders
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L478
+.ord.getOrder:{[orderID]
+  res: .ord.CLI.get_order[.ref.castID orderID];
+  ord: (key res)#.ord.template$res;
   if[`created_at in key ord;
     ord: @[ord;`created_at;.ut.iso2Q]];
   if[`done_at in key ord;
     ord: @[ord;`done_at;.ut.iso2Q]];
   ord};
 
-.ord.placeMarketOrder:{[sym;side;size]
+///
+// Place market order.
+//
+// example:
+// q) .ord.placeMarketOrder[`BTCUSD;`sell;0.01]
+// q) .ord.placeMarketOrder[`BTCUSD;`sell;(enlist`funds)!enlist 0.01]
+//
+// parameters:
+// sym  [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// side [symbol/string] - Order side ('buy' or 'sell)
+// size   [float] - Desired amount in crypto. Specify this or `funds` in kwargs.
+// kwargs [dict] - Keyword arguments
+//
+// *NOTE* `size` and `kwargs` are overloaded based on type;
+//        <float> sets the `size` parameter
+//        <dict> sets `kwargs`
+//        `funds` must be provided in kwargs.
+//        Setting `size` defaults the remaining parameters.
+//        Use `kwargs` for more granular customization.
+//
+// returns:
+// ord [dict] - Order information
+//  id            | `00000000-0000-0000-0000-000000000000
+//  size          | 0.01
+//  product_id    | `BTC-USD
+//  side          | `sell
+//  stp           | `dc
+//  type          | `market
+//  post_only     | 0b
+//  created_at    | 2019.05.22T10:45:12.097
+//  fill_fees     | 0f
+//  filled_size   | 0f
+//  executed_value| 0f
+//  status        | `pending
+//  settled       | 0b
+//  
+// wraps: place_market_order
+//  api - https://docs.pro.coinbase.com/#place-a-new-order
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L253
+.ord.placeMarketOrder: .ut.xfunc {[x]
+  sym: .ut.xposi[x; 0; `sym];
+  side: .ut.xposi[x; 1; `side];
+  kwargs: .ut.default[x 2; .ord.marketKW];
   pid: .ref.getPID[sym];
-  res: .ord.CLI.place_market_order[pid; side; size];
-  ord: (key res)#.ref.orderTemp$res;
-  if[`created_at in key ord;
-    ord: @[ord;`created_at;.ut.iso2Q]];
+  res: .ord.CLI.place_market_order . (pid; side; (::;pykwargs)[.ut.isDict kwargs] kwargs);
+  if[`message in key res; :res];
+  ord: (key res)#.ord.template$res;
+  ord: .ord.tmfmt[res; ord];
   ord};
 
-.ord.placeLimitOrder:{[sym;side;price;size]
+///
+// Place limit order.
+//
+// example:
+// q) .ord.placeLimitOrder[`BTCUSD;`sell;20100.00;0.01]
+// q) .ord.placeLimitOrder[`BTCUSD;`sell;20100.00;0.01;(enlist `time_in_force)!enlist`IOC]
+// q) .ord.placeLimitOrder[`BTCUSD;`sell;20100.00;0.01;(`time_in_force`cancel_after`post_only)!(`GTT;`day;1b)]
+//
+// parameters:
+// sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// side   [symbol/string] - Order side ('buy' or 'sell)
+// price  [float] - Price per crypto.
+// size   [float] - Amount in crypto.
+// kwargs [dict] - Keyword arguments
+//
+// returns:
+// ord [dict] - Order information
+//  id            | `00000000-0000-0000-0000-000000000000
+//  price         | 20100f
+//  size          | 0.01
+//  product_id    | `BTC-USD
+//  side          | `sell
+//  stp           | `dc
+//  type          | `limit
+//  time_in_force | `GTT
+//  expire_time   | 2019.05.23T11:14:47.000
+//  post_only     | 1b
+//  created_at    | 2019.05.22T11:14:47.335
+//  fill_fees     | 0f
+//  filled_size   | 0f
+//  executed_value| 0f
+//  status        | `pending
+//  settled       | 0b
+//
+// wraps: place_limit_order
+//  api - https://docs.pro.coinbase.com/#place-a-new-order
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L294
+.ord.placeLimitOrder: .ut.xfunc {[x]
+  sym: .ut.xposi[x; 0; `sym];
+  side: .ut.xposi[x; 1; `side];
+  price: .ut.xposi[x; 2; `price];
+  size: .ut.xposi[x; 3; `size];
+  kwargs: .ut.default[x 4; .ord.limitKW];
   pid: .ref.getPID[sym];
-  res: .ord.CLI.place_limit_order[pid; side; price; size];
-  ord: (key res)#.ref.orderTemp$res;
-  if[`created_at in key ord;
-    ord: @[ord;`created_at;.ut.iso2Q]];
+  res: .ord.CLI.place_limit_order[pid; side; price; size; pykwargs kwargs];
+  if[`message in key res; :res];
+  ord: (key res)#.ord.template$res;
+  ord: .ord.tmfmt[res; ord];
   ord};
+
+///
+// Place stop loss order.
+// *Creates a limit order, stop market is not supported.
+//
+// example:
+// q) .ord.placeStopLoss[`BTCUSD;3015.00;3000.00;0.01]
+//
+// parameters:
+// sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// side   [symbol/string] - Order side ('buy' or 'sell)
+// price  [float] - Price per crypto.
+// size   [float] - Amount in crypto.
+// kwargs [dict] - Keyword arguments
+//
+// returns:
+// ord [dict] - Order information
+//  id            | `00000000-0000-0000-0000-000000000000
+//  price         | 3000f
+//  size          | 0.01
+//  product_id    | `BTC-USD
+//  side          | `sell
+//  stp           | `dc
+//  type          | `limit
+//  time_in_force | `GTC
+//  post_only     | 0b
+//  created_at    | 2019.06.08T06:39:02.138
+//  fill_fees     | 0f
+//  filled_size   | 0f
+//  executed_value| 0f
+//  status        | `pending
+//  settled       | 0b
+//  stop          | `loss
+//  stop_price    | 3015f
+//
+// wraps: place_stop_loss
+//  api - https://docs.pro.coinbase.com/#place-a-new-order
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L350
+.ord.placeStopLoss: .ut.xfunc {[x]
+  sym: .ut.xposi[x; 0; `sym];
+  stop_price: .ut.xposi[x; 1; `stop_price];
+  price: .ut.xposi[x; 2; `price];
+  size: .ut.xposi[x; 3; `size];
+  kwargs: .ut.default[x 4; .ord.limitKW];
+  pid: .ref.getPID[sym];
+  res: .ord.CLI.place_stop_loss[pid; stop_price; price; size; pykwargs kwargs];
+  if[`message in key res; :res];
+  ord: (key res)#.ord.template$res;
+  ord: .ord.tmfmt[res; ord];
+  ord};
+
+///
+// Place stop entry order.
+// *Creates a limit order, stop market is not supported.
+//
+// example:
+// q) .ord.placeStopEntry[`BTCUSD;5050.00;5100.00;0.01]
+//
+// parameters:
+// sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// side   [symbol/string] - Order side ('buy' or 'sell)
+// price  [float] - Price per crypto.
+// size   [float] - Amount in crypto.
+// kwargs [dict] - Keyword arguments
+//
+// returns:
+// ord [dict] - Order information
+//  id            | `00000000-0000-0000-0000-000000000000
+//  price         | 5100f
+//  size          | 0.01
+//  product_id    | `BTC-USD
+//  side          | `buy
+//  stp           | `dc
+//  type          | `limit
+//  time_in_force | `GTC
+//  post_only     | 0b
+//  created_at    | 2019.06.08T06:43:54.985
+//  fill_fees     | 0f
+//  filled_size   | 0f
+//  executed_value| 0f
+//  status        | `pending
+//  settled       | 0b
+//  stop          | `entry
+//  stop_price    | 5050f
+//
+// wraps: place_stop_loss
+//  api - https://docs.pro.coinbase.com/#place-a-new-order
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L410
+.ord.placeStopEntry: .ut.xfunc {[x]
+  sym: .ut.xposi[x; 0; `sym];
+  stop_price: .ut.xposi[x; 1; `stop_price];
+  price: .ut.xposi[x; 2; `price];
+  size: .ut.xposi[x; 3; `size];
+  kwargs: .ut.default[x 4; .ord.limitKW];
+  pid: .ref.getPID[sym];
+  res: .ord.CLI.place_stop_entry[pid; stop_price; price; size; pykwargs kwargs];
+  if[`message in key res; :res];
+  ord: (key res)#.ord.template$res;
+  ord: .ord.tmfmt[res; ord];
+  ord};
+
+.ord.cancelOrder:{[orderID]
+  res: .ord.CLI.cancel_order[.ref.castID oid];
+  if[not .ut.isDict res; res:.ut.raze "G"$res];
+  res};
+
+.ord.cancelAll:{[sym]
+  res: .ord.CLI.cancel_all[.ref.getPID `BTCUSD];
+  if[not .ut.isDict res; res:.ut.raze "G"$res];
+  res};
+
+.ord.getCoinbaseAccounts:{[]
+  res:.ord.CLI.get_coinbase_accounts[];
+  res:`id`name`balance`currency`type`primary`active`hold_balance`hold_currency#/:res;
+  res:"GSFSSbbFS"$/:res;
+  res};
+
+.ord.testDeposit:{[ccy]
+  if[not `test = .ord.CLI.getEnv[];'testEnvOnly];
+  t: {?[.ord.getCoinbaseAccounts[];((=;`currency;enlist x);(>;`balance;0));();()]}ccy;
+  .ord.CLI.coinbase_deposit . string t`balance`currency`id
+  };
+  
+.ord.tmkey:`created_at`expire_time`done_at;
+.ord.tmfmt:{i:.ord.tmkey where .ord.tmkey in key x; @[y;i;.ut.iso2Q]};
+.ord.limitKW: .ut.repeat[`client_oid`stp`time_in_force`cancel_after`post_only`overdraft_enabled`funding_amount; .py.none];
+.ord.marketKW: .ut.repeat[`size`funds`client_oid`stp`overdraft_enabled`funding_amount; .py.none];
+.ord.stopKW: .ut.repeat[`size`funds`client_oid`stp`overdraft_enabled`funding_amount; .py.none];
+.ord.template: `id`price`size`product_id`side`type`time_in_force`post_only`created_at`expire_time`done_at`done_reason`fill_fees`filled_size`executed_value`status`settled`funds`specified_funds`stop`stop_price`stp!"GFFSSSSb***SFFFSbFFSFS";
+
+
+
