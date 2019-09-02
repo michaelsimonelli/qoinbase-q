@@ -1,6 +1,5 @@
 # Coinbase Pro API config
 
-QLIC="$QHOME"
 QCMD="$QHOME/l64/q"
 
 if  [ -x "$(command -v rlwrap)" ]; then
@@ -8,15 +7,9 @@ if  [ -x "$(command -v rlwrap)" ]; then
 fi
 
 export CB_DIR="$PWD";
-export CB_ACCESS_KEY="d7d381cdbb3d0de770cea8a637aa0379"
-export CB_ACCESS_SIGN="AnXRvi7fgsF7mCcRIibJB4tx2DSoxN1ovcusZcviJggkwYMzMFSekW82Y94CzJScUArSiBe6uOMkafDpWs/cpw=="
-export CB_ACCESS_PASSPHRASE="ue37tvk07q9"
-
-export ALT_PRIV_KEY="5535d2b0f2736ee894c75e4d8a04463a"
-export ALT_PRIV_SECRET="YnuNI7bOUEKMa26ZaqoFN5snMECA4fE6TgYGSo0jxqNGpz/GtbTFy3P/dM3YU0GKFV9xpqbEcub9iGQDz8VlQw=="
-export ALT_PRIV_PASSPHRASE="Verboten10@"
-
-export CLI_PUBLIC_ENV="live"
-export CLI_PRIVATE_ENV="test"
+# Enter Coinbase Pro credentials
+export CB_ACCESS_KEY=""
+export CB_ACCESS_SIGN=""
+export CB_ACCESS_PASSPHRASE=""
 
 $QCMD cbpro.q "$@"
