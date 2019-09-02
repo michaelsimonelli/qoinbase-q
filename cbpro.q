@@ -6,6 +6,16 @@
 
 .cbpro.urls:`live`test!("https://api.pro.coinbase.com"; "https://api-public.sandbox.pro.coinbase.com");
 
+///
+// CLIENT CONTEXT
+/////////////////////////////
+
+// Global Market Data Client
+.CLI.mkt:();
+
+// Global Order Management Client
+.CLI.ord:();
+
 .cbpro.cli.public:{[env]
   apiurl: .cbpro.priv.apiurl[env];  
 
@@ -26,6 +36,45 @@
   client: .cbpro.priv.addFuncs .cbpro.AuthenticatedClient[(auth[`apikey`secret`phrase],enlist apiurl)];
 
   client};
+
+///
+// API CONTEXT
+/////////////////////////////
+
+.cbpro.api.loaded:();
+.cbpro.api.inst:();
+
+.cbpro.api.load:{[l]
+  dir: getenv `CB_DIR;
+  if[@[{system x;1b};"l ",("/" sv (dir; l$:)),".q";0b];
+    .cbpro.api.loaded,:l];
+  };
+
+.cbpro.api.init: .ut.xfunc {[x]
+  typ: .ut.xposi[x; 0; `typ];
+  lib: .ut.xposi[x; 1; `lib];
+  env: .ut.xposi[x; 2; `env];
+
+  if[(lib=`ord) and not `mkt in .cbpro.api.inst; '"Dependency: Market api must be initialized"];
+  
+  if[not lib in .cbpro.api.loaded;
+    .cbpro.api.load lib];
+
+  cli: .cbpro.cli[typ] . (2 _ x);
+
+  .CLI[lib]: cli;
+
+  .ref.cache[lib][];
+
+  .cbpro.api.inst,: lib;
+
+  res: ` sv ``api,lib;
+
+  res};
+
+///
+// PRIVATE CONTEXT
+/////////////////////////////
 
 .cbpro.priv.apiurl:{[x] .ut.assert[not .ut.isNull u: .cbpro.urls[x]; "env must be one of (",(.Q.s1 key .cbpro.urls),")"]; u};
 

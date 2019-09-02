@@ -22,19 +22,6 @@
 // see: https://docs.pro.coinbase.com/
 // ____________________________________________________________________________
 
-// Market Data Client
-.mkt.CLI:();
-
-// Client instance flag
-.mkt.inst:0b;
-
-// Init market data client
-.mkt.init:{[cli]
-  .mkt.CLI:cli;
-  .ref.cache[`mkt][];
-  .mkt.inst:1b;
-  `.mkt.CLI};
-
 ///
 // List known currencies
 //
@@ -43,7 +30,7 @@
 // 
 // note:
 // The fields (message, details, and convertible_to) are stripped from api result.
-// For more detailed information, call .mkt.CLI.get_currencies[].
+// For more detailed information, call .CLI.mkt.get_currencies[].
 //
 // returns:
 // ccy [ktable] - currency reference data
@@ -58,7 +45,7 @@
 //  api - https://docs.pro.coinbase.com/#get-currencies
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L236
 .mkt.getCurrencies:{[]
-  res: .mkt.CLI.get_currencies[];
+  res: .CLI.mkt.get_currencies[];
   scm: `id`name`min_size`status!"SSFS";
   ccy: (key scm) #/: res;
   ccy: 1!scm[cols ccy] .ut.cast/: ccy;
@@ -96,7 +83,7 @@
 //  api - https://docs.pro.coinbase.com/#get-products
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L33
 .mkt.getProducts:{[]
-  res: .mkt.CLI.get_products[];
+  res: .CLI.mkt.get_products[];
   scm: `id`base_currency`quote_currency`base_min_size`base_max_size`base_increment`quote_increment`display_name`status`margin_enabled`status_message`min_market_funds`max_market_funds`post_only`limit_only`cancel_only`accessible!"SSSFFFFSSbCFFbbbb";
   products: scm[cols res] .ut.cast/: res;
   products: `sym xkey @[products;`sym;:;.Q.id'[products`id]];
@@ -126,7 +113,7 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L216
 .mkt.getProduct24hrStats:{[sym]
   pid: .ref.getPID[sym];
-  res: .mkt.CLI.get_product_24hr_stats[pid];
+  res: .CLI.mkt.get_product_24hr_stats[pid];
   stats: "F"$/:res;
   stats};
 
@@ -176,7 +163,7 @@
     kwargs[`end]:.ut.q2iso end];
   if[switch 2;
     kwargs[`granularity]:granularity];
-  res: .mkt.CLI.get_product_historic_rates[pid; pykwargs kwargs];
+  res: .CLI.mkt.get_product_historic_rates[pid; pykwargs kwargs];
   rates: `time`low`high`open`close`volume!flip "zfffff"$/:.[res; (::; 0); .ut.epo2Q];
   flip rates};
 
@@ -221,7 +208,7 @@
   if[switch 2;
     if[limit<100;
       kwargs[`limit]:limit]];
-  res: .mkt.CLI.get_product_trades[pid; pykwargs kwargs];
+  res: .CLI.mkt.get_product_trades[pid; pykwargs kwargs];
   trades: .py.list[res];
   trades: $[.ut.isStr last trades; -1_;]trades;
   trades: @[trades; `time; {.ut.iso2Q'[x]}];
@@ -255,7 +242,7 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L93
 .mkt.getProductTicker:{[sym]
   pid: .ref.getPID[sym];
-  tick: .mkt.CLI.get_product_ticker[pid];
+  tick: .CLI.mkt.get_product_ticker[pid];
   tick: "jFFZFFF"$tick;
   tick};
 
@@ -277,7 +264,7 @@
 //    epoch | 1.549964e+09
 //    qt    | 2019.02.12T09:37:23.973
 .mkt.getTime:{[fmt] 
-  tm: .mkt.CLI.get_time[];
+  tm: .CLI.mkt.get_time[];
 
   if[.ut.isNull fmt; :.ut.epo2Q tm`epoch]; 
 
@@ -318,7 +305,7 @@
 //    asks    | ,("0.98999";"16703.58801245";6)
 .mkt.getProductOrderBook:{[sym;level]
   pid: .ref.getPID[sym];
-  book: .mkt.CLI.get_product_order_book[pid; level];
+  book: .CLI.mkt.get_product_order_book[pid; level];
   cast: $[level<3;"FFj";"FFG"];
   book: @[book; `bids; cast$/:];
   book: @[book;`asks; cast$/:];
