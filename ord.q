@@ -425,8 +425,8 @@
 //
 // parameters:
 // sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
-// side   [symbol/string] - Order side ('buy' or 'sell)
-// price  [float] - Price per crypto.
+// stop_price [float] - Sets trigger price for stop order.
+// price  [float] - Price per crypto (limit).
 // size   [float] - Amount in crypto.
 // kwargs [dict] - Keyword arguments
 //
@@ -475,8 +475,8 @@
 //
 // parameters:
 // sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
-// side   [symbol/string] - Order side ('buy' or 'sell)
-// price  [float] - Price per crypto.
+// stop_price [float] - Sets trigger price for stop order.
+// price  [float] - Price per crypto (limit).
 // size   [float] - Amount in crypto.
 // kwargs [dict] - Keyword arguments
 //
@@ -522,7 +522,7 @@
   res};
 
 .ord.cancelAll:{[sym]
-  res: .CLI.ord.cancel_all[.ref.getPID `BTCUSD];
+  res: .CLI.ord.cancel_all[.ref.getPID sym];
   if[not .ut.isDict res; res:.ut.raze "G"$res];
   res};
 
@@ -542,7 +542,7 @@
 .ord.tmfmt:{i:.ord.tmkey where .ord.tmkey in key x; @[y;i;.ut.iso2Q]};
 .ord.limitKW: .ut.repeat[`client_oid`stp`time_in_force`cancel_after`post_only`overdraft_enabled`funding_amount; .py.none];
 .ord.marketKW: .ut.repeat[`size`funds`client_oid`stp`overdraft_enabled`funding_amount; .py.none];
-.ord.stopKW: .ut.repeat[`size`funds`client_oid`stp`overdraft_enabled`funding_amount; .py.none];
+/.ord.stopKW: .ut.repeat[`size`funds`client_oid`stp`overdraft_enabled`funding_amount; .py.none];
 .ord.template: `id`price`size`product_id`side`type`time_in_force`post_only`created_at`expire_time`done_at`done_reason`fill_fees`filled_size`executed_value`status`settled`funds`specified_funds`stop`stop_price`stp!"GFFSSSSb***SFFFSbFFSFS";
 
 

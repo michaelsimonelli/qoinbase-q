@@ -44,5 +44,76 @@
 
 .ut.epo2Q:{`datetime$(x % 86400) - 10957f};
 
+///
+// Parameter Registration API
+// ______________________________________________
 
+.ut.params.registerRequired:{[component; name; descr]
+  param:enlist each `component`name`val`required`descr!(component;name;`;1b;`$descr);
+  .ut.params.registered:.ut.params.registered,2!flip param;
+  .ut.params.priv.updateFromEnv[component; name];
+  };
+
+.ut.params.registerOptional:{[component; name; default; descr]
+  param:enlist each `component`name`val`required`descr!(component;name;default;0b;`$descr);
+  .ut.params.registered:.ut.params.registered,2!flip param;
+  .ut.params.priv.updateFromEnv[component; name];
+  };
+
+.ut.params.get:{[component_]
+  // Assert component exist
+  if[exec not component_ in component from .ut.params.registered; 'InvalidComponent];
+  // Assert non-null required
+  missing:exec name from .ut.params.registered where component = component_, required, .ut.isNull'[val];
+  // Signal if missing
+  if[0<>count missing;
+    '`$"ERROR: Missing required params (", string[component_],"): ",", " sv string missing];
+  // Return name->value dict
+  params:exec name!.ut.raze'[val] from .ut.params.registered where component=component_;
+  params};
+
+.ut.params.set:{[names; values]
+  names:.ut.enlist[names];
+  values:.ut.enlist[values];
+  // Match names to values (can be on to many)
+  setting:names!$[(1 = count names) and 1 < count values; enlist values; values];
+  // Select params with name, set new values, and get types
+  params:select component, name, val:setting name, ty:type each val from .ut.params.registered where name in names;
+  // For each param row
+  { // Attempt to cast
+    x[`val]:.[$;(abs x`ty; x`val);{x`val}[x]];
+    // Conform if list
+    if[.ut.isList x`ty; x[`val]:.ut.enlist x`val];
+    // Update
+    .ut.params.priv.update[x`component; x`name; x`val];
+  } each params;
+  };
+
+.ut.params.registered:([component:`symbol$(); name:`symbol$()] val:(); required:`boolean$(); descr:`symbol$());
+
+.ut.params.priv.update:{[component_; name_; val_]
+  // Get the old param row as a dict
+  param:exec from `.ut.params.registered where component = component_, name = name_;
+  // Remove the old param (facilitates atom -> list type change)
+  delete from `.ut.params.registered where component = component_, name = name_;
+  // Set the new param value
+  param[`val]:val_;
+  // Convert the param dict into a table
+  param:2!enlist param;
+  // Join the new 'param' table with the existing table
+  .ut.params.registered,:param;
+  };
+
+.ut.params.priv.updateFromEnv:{[component; name]
+  param:getenv name;
+
+  if[.ut.isNull param; :0];
+
+  if[1<count param; param:string .ut.raze `$"|" vs param];
+
+  typ:.ut.type .ut.params.registered[component,name; `val];
+  param:typ[`chr]$param;
+
+  .ut.params.priv.update[component; name; param];
+  };
 

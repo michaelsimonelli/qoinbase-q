@@ -6,10 +6,10 @@ if  [ -x "$(command -v rlwrap)" ]; then
   QCMD="rlwrap -r $QCMD"
 fi
 
-export CB_DIR="$PWD";
+export CBPRO_APP_DIR="$PWD";
 # Enter Coinbase Pro credentials
-export CB_ACCESS_KEY=""
-export CB_ACCESS_SIGN=""
-export CB_ACCESS_PASSPHRASE=""
+export CBPRO_API_KEY=""
+export CBPRO_API_SIGN=""
+export CBPRO_API_PASSPHRASE=""
 
 $QCMD cbpro.q "$@"
