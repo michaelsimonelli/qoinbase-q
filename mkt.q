@@ -27,10 +27,10 @@
 //
 // example:
 // q) .mkt.getCurrencies[]
+// q) .mkt.getCurrencies[1b]
 // 
-// note:
-// The fields (message, details, and convertible_to) are stripped from api result.
-// For more detailed information, call .CLI.mkt.get_currencies[].
+// parameters:
+// v [boolean] - verbose, display more in-depth currency data (optional)
 //
 // returns:
 // ccy [ktable] - currency reference data
@@ -40,18 +40,22 @@
 //  name          | s       United States Dollar
 //  min_size      | f       0.01
 //  status        | s       `online
+//  message       | c       ""
+//  max_precision | f       0.01
+//  convertible_to| s       ,`USDC
 //
 // wraps: get_currencies
 //  api - https://docs.pro.coinbase.com/#get-currencies
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L236
-.mkt.getCurrencies:{[]
-  res: .CLI.mkt.get_currencies[];
-  scm: `id`name`min_size`status!"SSFS";
-  ccy: (key scm) #/: res;
-  ccy: 1!scm[cols ccy] .ut.cast/: ccy;
+.mkt.getCurrencies:{[v]
+  res: .scm.cast .CLI.mkt.get_currencies[];
+  ccy: 1!(`details,:) _ res;
+  if[.ut.default[v]0b;
+    dts: .scm.cast res`details;
+    ccy: ccy,'dts;
+  ];
   ccy};
 
-///
 // Get a list of available currency pairs for trading
 //
 // example:
@@ -84,10 +88,8 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L33
 .mkt.getProducts:{[]
   res: .CLI.mkt.get_products[];
-  scm: `id`base_currency`quote_currency`base_min_size`base_max_size`base_increment`quote_increment`display_name`status`margin_enabled`status_message`min_market_funds`max_market_funds`post_only`limit_only`cancel_only`accessible!"SSSFFFFSSbCFFbbbb";
-  products: scm[cols res] .ut.cast/: res;
-  products: `sym xkey @[products;`sym;:;.Q.id'[products`id]];
-  products};
+  p2: `sym xkey {@[x; `sym; :; .Q.id'[x`id]]}.scm.cast res;
+  p2}
 
 ///
 // Get 24 hr stats for the product
@@ -125,19 +127,17 @@
 // If you need real-time information, use the trade and book endpoints along with the websocket feed.
 //
 // example:
-// q) .mkt.getProductHistoricRates[`BTCUSD; `; `; `] (defaults 1 min candles, ending now, 350 data points)
-// q) .mkt.getProductHistoricRates[`BTCUSD; 2018.04.01T08:00:00.000; 2018.04.01T09:00:00.000; 60]
+// q) .mkt.getProductHistoricRates[`BTCUSD] (defaults 1 min candles, ending now, 350 data points)
+// q) .mkt.getProductHistoricRates[`BTCUSD; 60]
+// q) .mkt.getProductHistoricRates[`BTCUSD; 900; 2018.04.01T08:00:00.000; 2018.04.01T09:00:00.000] 
 // 
-// note:
-// This request does not work well in the sandbox env, your mileage may vary.
 //
-// parameters:
-// sym         [symbol/string]         - ccy pair/product
-// start       [datetime/timestamp] - start time            (optional)
-// end         [datetime/timestamp] - end time              (optional)
-// granularity [int]                - time slice in seconds (optional)
+// parameters: *USES EXPANDABLE PARAMETERS*
+// sym         [symbol/string]      - ccy pair/product
+// granularity [int]                - time slice in seconds (expandable)
+// start       [datetime/timestamp] - start time            (expandable)
+// end         [datetime/timestamp] - end time              (expandable)
 //  - accepted granularity: (60, 300, 900, 3600, 21600, 86400)
-//  - optional parameters can accept any null value
 //
 // returns:
 // rates [table] - historic candle data, volume in base currency units
@@ -153,36 +153,36 @@
 // wraps: get_product_historic_rates
 //  api - https://docs.pro.coinbase.com/#get-historic-rates
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L162
-.mkt.getProductHistoricRates:{[sym;start;end;granularity];
-  pid: .ref.getPID[sym];
-  kwargs: `start`end`granularity!(3#.py.none);
-  switch: not .ut.isNull each (start; end; granularity);
-  if[switch 0;
-    kwargs[`start]:.ut.q2iso start];
-  if[switch 1;
-    kwargs[`end]:.ut.q2iso end];
-  if[switch 2;
-    kwargs[`granularity]:granularity];
+.mkt.getProductHistoricRates: .ut.xfunc {[x];
+  productID: .ref.getPID .ut.xposi[x; 0; `sym];
+  granularity: .ut.default[x 1; `];
+  start:       .ut.default[x 2; `];
+  end:         .ut.default[x 3; `];
+  kwargs: .ut.kwargs.pop[`granularity`start`end; (::;.ut.q2iso;.ut.q2iso); (granularity;start;end)];
   res: .CLI.mkt.get_product_historic_rates[pid; pykwargs kwargs];
-  rates: `time`low`high`open`close`volume!flip "zfffff"$/:.[res; (::; 0); .ut.epo2Q];
+  rates: `time`low`high`open`close`volume!flip "zfffff"$/:.[res; (::; 0); .scm.fn.epoch];
   flip rates};
 
 ///
 // List the trades for a product.
 //
 // example:
-// q) .mkt.getProductTrades[`BTCUSD; `; `; `] (defaults to latest trades)
-// q) .mkt.getProductTrades[`BTCUSD; 5; 100; `]
+// q) .mkt.getProductTrades[`BTCUSD] (defaults to latest trades)
+// q) .mkt.getProductTrades[`BTCUSD;7447500;7447550]
+// q) .mkt.getProductTrades[`BTCUSD;7447500;7447550;10]
 // 
-// note:
-// This request does not work well in the sandbox env, your mileage may vary.
 //
 // parameters:
 // sym    [symbol/string] - ccy pair/product
-// before [int] - begin trade index (optional)
-// after  [int] - end trade index   (optional)
-// limit  [int] - number of records (optional)
-//  - under 100, anything higher auto paginated, arg is finicky
+// before [int] - Begin trade index (expandable)
+// after  [int] - End trade index   (expandable)
+// limit  [int] - Number of results. Max 100 (expandable)
+//
+// *note* Cursor pagination can be unintuitive at first. 
+// before and after cursor arguments should not be confused with before and after in chronological time. 
+// Most paginated requests return the latest information (newest) as the first page sorted by newest (in chronological time) first. 
+// To get older information you would request pages after the initial page. 
+// To get information newer, you would request pages before the first page.
 //
 // returns:
 // trades [table] - trades within index, defaults to latest
@@ -197,22 +197,14 @@
 // wraps: get_product_trades
 //  api - https://docs.pro.coinbase.com/#get-trades
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L118
-.mkt.getProductTrades:{[sym;before;after;limit];
-  pid:.ref.getPID[sym];
-  kwargs: `before`after`limit!(3#.py.none);
-  switch: not .ut.isNull each (before; after; limit);
-  if[switch 0;
-    kwargs[`before]:before];
-  if[switch 1;
-    kwargs[`after]:after];
-  if[switch 2;
-    if[limit<100;
-      kwargs[`limit]:limit]];
-  res: .CLI.mkt.get_product_trades[pid; pykwargs kwargs];
-  trades: .py.list[res];
-  trades: $[.ut.isStr last trades; -1_;]trades;
-  trades: @[trades; `time; {.ut.iso2Q'[x]}];
-  trades: "zjFFS"$/:trades;
+.mkt.getProductTrades:.ut.xfunc {[x]
+  pid: .ref.getPID .ut.xposi[x; 0; `sym];
+  b: .ut.default[x 1; .py.none];
+  a: .ut.default[x 2; .py.none];
+  l: .ut.default[x 3; .py.none];
+  kwargs: .ut.kwargs.pop[`before`after`limit;(b;a;l)];
+  res: .py.list .CLI.mkt.get_product_trades[pid; pykwargs kwargs];
+  trades: .scm.cast res;
   trades};
 
 ///
@@ -225,7 +217,7 @@
 // q) .mkt.getProductTicker["BTC-USD"]
 //
 // parameters:
-// sym    [symbol/string] - ccy pair/product
+// sym [symbol/string] - A valid product id or sym <.ref.p2`sym`id>
 //
 // returns:
 // tick [dict(symbol|mixed)] - ticker info
@@ -242,19 +234,22 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L93
 .mkt.getProductTicker:{[sym]
   pid: .ref.getPID[sym];
-  tick: .CLI.mkt.get_product_ticker[pid];
-  tick: "jFFZFFF"$tick;
+  tick: .scm.cast .CLI.mkt.get_product_ticker[pid];
   tick};
 
 ///
 // Get the API server time
+//
+// example:
+// q) .mkt.getTime[]
+// q) .mkt.getTime[`iso]
 //
 // wraps: get_time
 // api - https://docs.pro.coinbase.com/#time
 // lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L254
 //
 // parameters:
-// fmt [symbol] - format toe receive timestamp in (iso, epoch, q)
+// fmt [symbol] - Format timestamp output (q[default], iso, epoch, all)
 //
 // returns:
 // tm [dict] - server time in ISO, epoch, and q format
@@ -265,26 +260,28 @@
 //    qt    | 2019.02.12T09:37:23.973
 .mkt.getTime:{[fmt] 
   tm: .CLI.mkt.get_time[];
+  def: .scm.fn[`epoch]tm`epoch;
 
-  if[.ut.isNull fmt; :.ut.epo2Q tm`epoch]; 
+  if[.ut.isNull fmt; :def];
 
-  .ut.assert[fmt in `iso`epoch`qt`all;"Bad format"]; 
+  .ut.assert[fmt in `iso`epoch`q`all; "Invalid option - choose from: `iso`epoch`q`all"];
 
-  tm[`qt]:.ut.epo2Q tm`epoch; 
+  res: $[fmt in `iso`epoch; tm fmt; fmt = `q; def; [tm[`q]:def; tm]]; 
 
-  if[fmt=`all; :tm]; 
-
-  tm[fmt]};
+  res};
 
 ///
 // Get a list of open orders for a product.
+//
+// example:
+// q) .mkt.getProductOrderBook[`BTCUSD;2]
 //
 // wraps: get_product_order_book
 // api - https://docs.pro.coinbase.com/#get-product-order-book
 // lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L53
 //
 // parameters:
-// sym   [symbol/string] - ccy pair/product
+// sym [symbol/string]   - A valid product id or sym <.ref.p2`sym`id>
 // level [int]           - book level (optional) default=1
 //
 // note:
@@ -306,10 +303,9 @@
 .mkt.getProductOrderBook:{[sym;level]
   pid: .ref.getPID[sym];
   book: .CLI.mkt.get_product_order_book[pid; level];
-  cast: $[level<3;"FFj";"FFG"];
-  book: @[book; `bids; cast$/:];
-  book: @[book;`asks; cast$/:];
-  book};
+  fmt: ("FF";`price`size),'(("j";"G");(`num;`id))@\:level=3;
+  res: @[book; `bids`asks; flip fmt[1]!flip fmt[0]$/:];
+  res};
 
 ///////////////////////////////////////
 // REFERENCE DATA                    //

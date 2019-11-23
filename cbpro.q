@@ -1,4 +1,5 @@
 \l ut.q
+\l scm.q
 \l extend.q
 
 .py.import[`cbpro];
@@ -7,20 +8,20 @@
 // Register parameters
 .ut.params.registerOptional[`cbpro; `CBPRO_APP_DIR; system"cd"; "Client start up path"];
 .ut.params.registerOptional[`cbpro; `CBPRO_API_KEY; `;"Coinbase Pro API access key"];
-.ut.params.registerOptional[`cbpro; `CBPRO_API_SIGN; `;"Coinbase Pro API secret key"];
+.ut.params.registerOptional[`cbpro; `CBPRO_API_SECRET; `;"Coinbase Pro API secret key"];
 .ut.params.registerOptional[`cbpro; `CBPRO_API_PASSPHRASE; `;"Coinbase Pro API user passphrase"];
 
 // API env endpoints
 .api.URLS:`live`test!("https://api.pro.coinbase.com"; "https://api-public.sandbox.pro.coinbase.com");
 
 // Main Client
-.cli.MAIN:();
+.CLI.main:();
 
 // Market Data Client
-.cli.MKT:();
+.CLI.mkt:();
 
 // Order Management Client
-.cli.ORD:();
+.CLI.ord:();
 
 .cbpro.cli.public:{[env]
   apiurl: .env.endpoint[env];  
@@ -32,14 +33,15 @@
 .cbpro.cli.auth: .ut.xfunc {[x]
   .ut.assert[(count x) in 1 4;"Invalid number of arguments, accepts valence of 1 OR 4"];
 
+  .sim.x:x;
   env: .ut.xposi[x; 0; `env];
   apiurl: .env.endpoint[env];
-  auth: .cbpro.priv.auth . x[1 2 3];
+  auth: .cbpro.priv.access . x[1 2 3];
 
   if[any .ut.isNull each auth;
     '"Invalid authentication", $[(count x)=1; ", check env vars: `CBPRO_API_KEY`CBPRO_API_SIGN`CBPRO_API_PASSPHRASE";""]];
 
-  client: .cbpro.priv.addFuncs .cbpro.AuthenticatedClient[(auth[`apikey`secret`phrase],enlist apiurl)];
+  client: .cbpro.priv.addFuncs .cbpro.AuthenticatedClient[(auth[`apikey`secret`passphrase],enlist apiurl)];
 
   client};
 
@@ -57,8 +59,8 @@
   };
 
 .api.init:{[env]
-  .cli.MAIN: .cbpro.cli.auth[env];
-  .cli.MKT: .cli.ORD: .cli.MAIN;
+  .CLI.main: .cbpro.cli.auth[env];
+  .CLI.mkt: .CLI.ord: .CLI.main;
 
   if[not `mkt in .api.loaded; .api.load `mkt];
   if[not `ord in .api.loaded; .api.load `ord];
@@ -80,7 +82,7 @@
   if[not lib in .api.loaded;
     .api.load lib];
 
-  cli: $[.ut.isNull .cli.MAIN; .cbpro.cli[typ] . (2 _ x); .cli.MAIN];
+  cli: $[.ut.isNull .CLI.main; .cbpro.cli[typ] . (2 _ x); .CLI.main];
 
   .CLI[lib]: cli;
 
@@ -100,13 +102,11 @@
 
 .cbpro.priv.access:{[api_key;secret;passphrase]
   a: .ut.default[api_key;     `$getenv `CBPRO_API_KEY];
-  s: .ut.default[secret;      `$getenv `CBPRO_API_SIGN];
+  s: .ut.default[secret;      `$getenv `CBPRO_API_SECRET];
   p: .ut.default[passphrase;  `$getenv `CBPRO_API_PASSPHRASE];
-  r: `apikey`sign`pass!(a;s;p);
-  r};
+  r: `apikey`secret`passphrase!(a;s;p);
+  r};.
 
-acc:.cbpro.priv.access . aa
-acc`key
 .cbpro.priv.isAuth:{[x]
   r: @[x`get_accounts; ::; `];
   a: not $[.ut.isTable r; 
@@ -114,7 +114,7 @@ acc`key
             .ut.isNull r; 
               1b; 
               .ut.isDict r; 
-                (`message in key r) and ("Invalid API Key"~r`message); 
+                (`message in key r); 
                 0b];
   a};
 
@@ -128,21 +128,5 @@ acc`key
   c[`setEnv]: .cbpro.priv.setEnv c;
   c};
 
-pc.isAuth
-pc`get_accounts
-pc:.cbpro.cli.public[`live]
-ac:.cbpro.cli.auth[`live]
-@[pc`get_accounts;::]
-r:pc[`get_accounts][]
-r:alt.get_accounts[]
-r:ac.get_accounts[]
-pc
-if[.ut.isDict r;
-if[
-not 
-.ut.isTable r
-not 
-not $[.ut.isTable r; 0b; .ut.isNull r; 1b; .ut.isDict r; (`message in key r) and ("Invalid API Key"~r`message); 0b]
-$[.ut.isTable r; 0b; $[.ut.isDict r;(`message in key r) and ("Invalid API Key"~r`message);0b]]
 
-
+/$[.ut.isTable r;             0b;             .ut.isNull r;               1b;               .ut.isDict r;                 (`message in key r);                 0b];
