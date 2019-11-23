@@ -45,6 +45,16 @@
 .ut.epo2Q:{`datetime$(x % 86400) - 10957f};
 
 ///
+// Types
+// ______________________________________________
+
+.ut.typ.num:raze@[2#enlist 5h$where" "<>20#.Q.t;0;neg];
+
+.ut.typ.ref:1!flip `int`chr`sym!{(x;?[x<0;upper .Q.t abs x;.Q.t x];key'[x$\:()])}.ut.typ.num;
+
+.ut.type:{ t:type x;((enlist `int)!enlist t),.ut.typ.ref[t] };
+
+///
 // Parameter Registration API
 // ______________________________________________
 
@@ -111,8 +121,8 @@
 
   if[1<count param; param:string .ut.raze `$"|" vs param];
 
-  typ:.ut.type .ut.params.registered[component,name; `val];
-  param:typ[`chr]$param;
+  typ:type .ut.params.registered[component,name; `val];
+  param:typ$param;
 
   .ut.params.priv.update[component; name; param];
   };
