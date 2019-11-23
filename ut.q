@@ -1,3 +1,7 @@
+///
+// General Utility
+// ______________________________________________
+
 .ut.isSym:{ -11h = type x };
 
 .ut.isStr:{ 10h = type x };
@@ -32,7 +36,23 @@
 
 .ut.xposi:{ .ut.assert[not .ut.isNull x y; "positional argument (",(y$:),") '",(z$:),"' required"]; x y};
 
+.ut.kwargs.pop: .ut.xfunc {[x]
+  p: .ut.xposi[x; 0; `params];
+  v: .ut.xposi[x; 1; `values];
+  f: .ut.default[x 2; count[p]#(::)];
+  k: (count[p]#.py.none);
+  i: not .py.isNone each v;
+  r: .ut.kwargs.upd[p;k;f;v] where i;
+  r`kwargs}
+
+.ut.kwargs.upd:{[p;k;f;v;i]
+  t:p!flip`kwargs`func`vals!(k;f;v);
+  u:{x[`kwargs]:(@'/)x[`func`vals];x};
+  flip @[t;p i;u]};
+
 .ut.assert:{ [x;y] if[not x;'"Assert failed: ",y] };
+
+.ut.table:{ x[0]!/:1_x };
 
 .ut.q2iso:{[qtime]
   if[not (typ: type qtime) in (-12h;-15h);'"datetime or timestamp expected"];
@@ -51,6 +71,8 @@
 .ut.typ.num:raze@[2#enlist 5h$where" "<>20#.Q.t;0;neg];
 
 .ut.typ.ref:1!flip `int`chr`sym!{(x;?[x<0;upper .Q.t abs x;.Q.t x];key'[x$\:()])}.ut.typ.num;
+
+.ut.typ.map:{m:(0!x)`int`chr;(!/)m,'reverse m}.ut.typ.ref;
 
 .ut.type:{ t:type x;((enlist `int)!enlist t),.ut.typ.ref[t] };
 
