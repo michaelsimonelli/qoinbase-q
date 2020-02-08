@@ -38,7 +38,7 @@
 //  api - https://docs.pro.coinbase.com/#list-accounts
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L58
 .ord.getAccounts:{[]
-  res: .CLI.ord.get_accounts[];
+  res: .cli.ORD.get_accounts[];
   accounts: .scm.cast res;
   accounts};
 
@@ -66,7 +66,7 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L37
 .ord.getAccount:{[x]
   id: .ref.castID .ref.getAccID x;
-  res: .CLI.ord.get_account[id]; if[`message in key res; 'res`message];
+  res: .cli.ORD.get_account[id]; if[`message in key res; 'res`message];
   account: .scm.cast res;
   account};
 
@@ -99,7 +99,7 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L86
 .ord.getAccountHistory:{[x;t;v]
   id: .ref.castID .ref.getAccID x;
-  res: .py.list .CLI.ord.get_account_history id;
+  res: .py.list .cli.ORD.get_account_history id;
 
   if[not .ut.isNull t;
     f:{x like string y}[res`type;];
@@ -139,7 +139,7 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L125
 .ord.getAccountHolds:{[x]
   id: .ref.castID .ref.getAccID x;
-  res: .py.list .CLI.ord.get_account_holds[id];
+  res: .py.list .cli.ORD.get_account_holds[id];
   holds: .scm.cast res;
   holds};
 
@@ -186,7 +186,7 @@
       if[36=count .ut.toStr[y];x[`order_id]:.ref.castID y];
       if[not .ut.isNull p:.ref.getPID y; x[`product_id]:p];x};
   arg: fn/[arg;x];
-  res: .py.list .CLI.ord.get_fills[pykwargs arg];
+  res: .py.list .cli.ORD.get_fills[pykwargs arg];
   if[.ut.isNull res; :res];
   flls: .scm.cast res;
   flls};
@@ -239,7 +239,7 @@
   fn:{if[any y in`active`open`pending`done`settled; x[`status]:y];
       if[.ut.isAtom y; if[not .ut.isNull p:.ref.getPID y; x[`product_id]:p]];x};
   arg: fn/[arg;x];
-  res: .py.list .CLI.ord.get_orders[pykwargs arg];
+  res: .py.list .cli.ORD.get_orders[pykwargs arg];
   if[not count res; :(::)];
   ord: .scm.cast res;
   ord};
@@ -276,7 +276,7 @@
 //  api - https://docs.pro.coinbase.com/#list-orders
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/authenticated_client.py#L478
 .ord.getOrder:{[orderID]
-  res: .CLI.ord.get_order[.ref.castID orderID];
+  res: .cli.ORD.get_order[.ref.castID orderID];
   ord: .scm.cast res;
   ord};
 
@@ -324,7 +324,7 @@
   side: .ut.xposi[x; 1; `side];
   kwargs: .ut.default[x 2; .ord.marketKW];
   pid: .ref.getPID[sym];
-  res: .CLI.ord.place_market_order . (pid; side; (::;pykwargs)[.ut.isDict kwargs] kwargs);
+  res: .cli.ORD.place_market_order . (pid; side; (::;pykwargs)[.ut.isDict kwargs] kwargs);
   if[`message in key res; :res];
   ord: .scm.cast res;
   ord};
@@ -373,7 +373,7 @@
   size:  .ut.xposi[x; 3; `size];
   kwargs: .ut.default[x 4; .ord.limitKW];
   pid: .ref.getPID[sym];
-  res: .CLI.ord.place_limit_order[pid; side; price; size; pykwargs kwargs];
+  res: .cli.ORD.place_limit_order[pid; side; price; size; pykwargs kwargs];
   if[`message in key res; :res];
   ord: .scm.cast res;
   ord};
@@ -423,7 +423,7 @@
   size:       .ut.xposi[x; 3; `size];
   kwargs:     .ut.default[x 4; .ord.limitKW];
   pid: .ref.getPID[sym];
-  res: .CLI.ord.place_stop_loss[pid; stop_price; price; size; pykwargs kwargs];
+  res: .cli.ORD.place_stop_loss[pid; stop_price; price; size; pykwargs kwargs];
   if[`message in key res; :res];
   ord: .scm.cast res;
   ord};
@@ -473,31 +473,31 @@
   size:       .ut.xposi[x; 3; `size];
   kwargs:     .ut.default[x 4; .ord.limitKW];
   pid: .ref.getPID[sym];
-  res: .CLI.ord.place_stop_entry[pid; stop_price; price; size; pykwargs kwargs];
+  res: .cli.ORD.place_stop_entry[pid; stop_price; price; size; pykwargs kwargs];
   if[`message in key res; :res];
   ord: .scm.cast res;
   ord};
 
 .ord.cancelOrder:{[orderID]
-  res: .CLI.ord.cancel_order[.ref.castID orderID];
+  res: .cli.ORD.cancel_order[.ref.castID orderID];
   if[not .ut.isDict res; res:.ut.raze "G"$res];
   res};
 
 .ord.cancelAll:{[sym]
-  res: .CLI.ord.cancel_all[.ref.getPID sym];
+  res: .cli.ORD.cancel_all[.ref.getPID sym];
   if[not .ut.isDict res; res:.ut.raze "G"$res];
   res};
 
 .ord.getCoinbaseAccounts:{[]
-  res:.CLI.ord.get_coinbase_accounts[];
+  res:.cli.ORD.get_coinbase_accounts[];
   res:`id`name`balance`currency`type`primary`active`hold_balance`hold_currency#/:res;
   res:"GSFSSbbFS"$/:res;
   res};
 
 .ord.testDeposit:{[ccy]
-  if[not `test = .CLI.ord.getEnv[];'testEnvOnly];
+  if[not `test = .cli.ORD.getEnv[];'testEnvOnly];
   t: {?[.ord.getCoinbaseAccounts[];((=;`currency;enlist x);(>;`balance;0));();()]}ccy;
-  .CLI.ord.coinbase_deposit . string t`balance`currency`id
+  .cli.ORD.coinbase_deposit . string t`balance`currency`id
   };
   
 .ord.limitKW: .ut.repeat[`client_oid`stp`time_in_force`cancel_after`post_only`overdraft_enabled`funding_amount; .py.none];

@@ -3,7 +3,7 @@ channels:
     - kx
 dependencies:
 - python>=3.5
-- msimonelli::extendPy
+- msimonelli::extendpy
 - openssl=1.0.2
 - pip
 - pip:

@@ -12,41 +12,38 @@
 .ut.params.registerOptional[`cbpro; `CBPRO_API_PASSPHRASE; `;"Coinbase Pro API user passphrase"];
 
 // Main Client
-.CLI.main:();
+.cli.MAIN:();
 
 // Market Data Client
-.CLI.mkt:();
+.cli.MKT:();
 
 // Order Management Client
-.CLI.ord:();
+.cli.ORD:();
 
-.cbpro.cli.public:{[env]
+.cli.public:{[env]
   apiurl: .api.endpoint[env];  
 
-  client: .cbpro.priv.addFuncs .cbpro.PublicClient[apiurl];
+  client: .cli.priv.addFuncs .cli.PublicClient[apiurl];
 
   client};
 
-.cbpro.cli.auth: .ut.xfunc {[x]
+.cli.auth: .ut.xfunc {[x]
   .ut.assert[(count x) in 1 4;"Invalid number of arguments, accepts valence of 1 OR 4"];
 
-  .sim.x:x;
   env: .ut.xposi[x; 0; `env];
   apiurl: .api.endpoint[env];
-  auth: .cbpro.priv.access . x[1 2 3];
+  auth: .cli.priv.access . x[1 2 3];
 
   if[any .ut.isNull each auth;
     '"Invalid authentication", $[(count x)=1; ", check env vars: `CBPRO_API_KEY`CBPRO_API_SIGN`CBPRO_API_PASSPHRASE";""]];
 
-  client: .cbpro.priv.addFuncs .cbpro.AuthenticatedClient[(auth[`apikey`secret`passphrase],enlist apiurl)];
+  client: .cli.priv.addFuncs .cbpro.AuthenticatedClient . ((value auth),enlist apiurl);
 
   client};
 
 ///
 // API CONTEXT
 /////////////////////////////
-
-.api.inst:();
 
 .api.loaded:();
 
@@ -61,40 +58,42 @@
     .api.loaded,:l];
   };
 
-.api.init: .ut.xfunc {[x]
-  typ: .ut.xposi[x; 0; `typ];
-  lib: .ut.xposi[x; 1; `lib];
-  env: .ut.xposi[x; 2; `env];
-
-  if[(lib=`ord) and not `mkt in .api.inst; .api.init[typ;`mkt;env]];
+.api.init:{[typ;env]
+  .ut.assert[typ in `public`auth; "Invalid 'type' param - must be `public or `auth"];
+  .ut.assert[env in `test`live; "Invalid 'env' param - must be `test or `live"];
   
-  .ut.lg"Initialing ",(string lib)," api client";
+  lib: $[typ ~ `public; `mkt; `ord];
+
+  if[.ut.isNull .cli.MAIN; .cli.MAIN: .cli[typ][env]];
+
+  if[lib ~ `ord;
+    if[not `mkt in .api.loaded;
+      .api.load `mkt;
+      .cli.MKT: .cli.MAIN;
+    ];
+  ];
 
   if[not lib in .api.loaded; .api.load lib];
 
-  cli: $[.ut.isNull .CLI.main; .cbpro.cli[typ] . (2 _ x); .CLI.main];
-
-  .CLI[lib]: cli;
+  .cli[upper lib]: .cli.MAIN;
 
   .ref.cache[lib][];
 
   .api.inst,: lib;
 
-  res: ` sv `,lib;
-
-  res};
+  `apiInit};
 
 ///
 // PRIVATE CONTEXT
 /////////////////////////////
-.cbpro.priv.access:{[api_key;secret;passphrase]
+.cli.priv.access:{[api_key;secret;passphrase]
   a: .ut.default[api_key;     `$getenv `CBPRO_API_KEY];
   s: .ut.default[secret;      `$getenv `CBPRO_API_SECRET];
   p: .ut.default[passphrase;  `$getenv `CBPRO_API_PASSPHRASE];
   r: `apikey`secret`passphrase!(a;s;p);
   r};.
 
-.cbpro.priv.isAuth:{[x]
+.cli.priv.isAuth:{[x]
   r: @[x`get_accounts; ::; `];
   a: not $[.ut.isTable r; 
             0b; 
@@ -105,14 +104,14 @@
                 0b];
   a};
 
-.cbpro.priv.getEnv:{[x;y] .api.URLS ? x[`url][]};
+.cli.priv.getEnv:{[x;y] .api.URLS ? x[`url][]};
 
-.cbpro.priv.setEnv:{[x;y] if[y in key .api.URLS; x[`url][.api.URLS y]]; x[`getEnv][]};
+.cli.priv.setEnv:{[x;y] if[y in key .api.URLS; x[`url][.api.URLS y]]; x[`getEnv][]};
 
-.cbpro.priv.addFuncs:{[c]
-  c[`isAuth]: .cbpro.priv.isAuth c;
-  c[`getEnv]: .cbpro.priv.getEnv c;
-  c[`setEnv]: .cbpro.priv.setEnv c;
+.cli.priv.addFuncs:{[c]
+  c[`isAuth]: .cli.priv.isAuth c;
+  c[`getEnv]: .cli.priv.getEnv c;
+  c[`setEnv]: .cli.priv.setEnv c;
   c};
 
 
