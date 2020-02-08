@@ -38,7 +38,7 @@
 //
 // wraps: get_currencies
 //  api - https://docs.pro.coinbase.com/#get-currencies
-//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L236
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L236
 .mkt.getCurrencies:{[v]
   res: .scm.cast .cli.MKT.get_currencies[];
   ccy: 1!(`details,:) _ res;
@@ -77,7 +77,7 @@
 //
 // wraps: get_products
 //  api - https://docs.pro.coinbase.com/#get-products
-//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L33
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L33
 .mkt.getProducts:{[]
   res: .cli.MKT.get_products[];
   p2: `sym xkey {@[x; `sym; :; .Q.id'[x`id]]}.scm.cast res;
@@ -104,7 +104,7 @@
 //
 // wraps: get_product_24hr_stats
 //  api - https://docs.pro.coinbase.com/#get-24hr-stats
-//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L216
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L216
 .mkt.getProduct24hrStats:{[sym]
   pid: .ref.getPID[sym];
   res: .cli.MKT.get_product_24hr_stats[pid];
@@ -122,7 +122,6 @@
 // q) .mkt.getProductHistoricRates[`BTCUSD] (defaults 1 min candles, ending now, 350 data points)
 // q) .mkt.getProductHistoricRates[`BTCUSD; 60]
 // q) .mkt.getProductHistoricRates[`BTCUSD; 900; 2018.04.01T08:00:00.000; 2018.04.01T09:00:00.000] 
-// 
 //
 // parameters: *USES EXPANDABLE PARAMETERS*
 // sym         [symbol/string]      - ccy pair/product
@@ -144,9 +143,9 @@
 //
 // wraps: get_product_historic_rates
 //  api - https://docs.pro.coinbase.com/#get-historic-rates
-//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L162
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L162
 .mkt.getProductHistoricRates: .ut.xfunc {[x];
-  productID: .ref.getPID .ut.xposi[x; 0; `sym];
+  pid: .ref.getPID .ut.xposi[x; 0; `sym];
   granularity: .ut.default[x 1; `];
   start:       .ut.default[x 2; `];
   end:         .ut.default[x 3; `];
@@ -188,7 +187,7 @@
 //
 // wraps: get_product_trades
 //  api - https://docs.pro.coinbase.com/#get-trades
-//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L118
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L118
 .mkt.getProductTrades:.ut.xfunc {[x]
   pid: .ref.getPID .ut.xposi[x; 0; `sym];
   b: .ut.default[x 1; .py.none];
@@ -223,7 +222,7 @@
 //
 // wraps: get_product_ticker
 //  api - https://docs.pro.coinbase.com/#get-product-ticker
-//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L93
+//  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L93
 .mkt.getProductTicker:{[sym]
   pid: .ref.getPID[sym];
   tick: .scm.cast .cli.MKT.get_product_ticker[pid];
@@ -238,7 +237,7 @@
 //
 // wraps: get_time
 // api - https://docs.pro.coinbase.com/#time
-// lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L254
+// lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L254
 //
 // parameters:
 // fmt [symbol] - Format timestamp output (q[default], iso, epoch, all)
@@ -270,7 +269,7 @@
 //
 // wraps: get_product_order_book
 // api - https://docs.pro.coinbase.com/#get-product-order-book
-// lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/qoinbase/public_client.py#L53
+// lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L53
 //
 // parameters:
 // sym [symbol/string]   - A valid product id or sym <.ref.p2`sym`id>
@@ -292,13 +291,15 @@
 //    sequence| 603223 
 //    bids    | ,("0.031";"3.76039452";1)
 //    asks    | ,("0.98999";"16703.58801245";6)
-.mkt.getProductOrderBook:{[sym;level]
-  pid: .ref.getPID[sym];
+.mkt.getProductOrderBook: .ut.xfunc {[x];
+  pid: .ref.getPID .ut.xposi[x; 0; `sym];
+  level: .ut.default[x 1; 1];
   book: .cli.MKT.get_product_order_book[pid; level];
   fmt: ("FF";`price`size),'(("j";"G");(`num;`id))@\:level=3;
   res: @[book; `bids`asks; flip fmt[1]!flip fmt[0]$/:];
   res};
 
+  
 ///////////////////////////////////////
 // REFERENCE DATA                    //
 ///////////////////////////////////////

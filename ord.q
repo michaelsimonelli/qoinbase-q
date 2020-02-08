@@ -378,7 +378,6 @@
   ord: .scm.cast res;
   ord};
 
-
 ///
 // Place stop loss order.
 // *Creates a limit order, stop market is not supported.
@@ -428,6 +427,8 @@
   ord: .scm.cast res;
   ord};
 
+.mkt.getProductTicker[`BTCUSD]
+price   | 9860.06
 
 ///
 // Place stop entry order.

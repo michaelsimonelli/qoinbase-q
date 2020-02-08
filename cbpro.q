@@ -20,7 +20,8 @@
 // Order Management Client
 .cli.ORD:();
 
-.cli.public:{[env]
+.cli.public: .ut.xfunc {[x]
+  env: .ut.xposi[x; 0; `env];
   url: .api.endpoint[env];  
 
   cli: .cli.priv.addFuncs .cli.PublicClient[url];
@@ -35,7 +36,7 @@
   ath: .cli.priv.access . x[1 2 3];
 
   if[any .ut.isNull each ath;
-    '"Invalid authentication", $[(count x)=1; ", check env vars: `CBPRO_API_KEY`CBPRO_API_SIGN`CBPRO_API_PASSPHRASE";""]];
+    '"Invalid authentication", $[(count x)=1; ", check env vars: `CBPRO_API_KEY`CBPRO_API_SECRET`CBPRO_API_PASSPHRASE";""]];
 
   cli: .cli.priv.addFuncs .cbpro.AuthenticatedClient . ((value ath),enlist url);
 
@@ -58,13 +59,18 @@
     .api.loaded,:l];
   };
 
-.api.init:{[typ;env]
+.api.init: .ut.xfunc {[x]
+  typ: .ut.xposi[x; 0; `typ];
+  env: .ut.xposi[x; 1; `env];
+
   .ut.assert[typ in `public`auth; "Invalid 'type' param - must be `public or `auth"];
   .ut.assert[env in `test`live; "Invalid 'env' param - must be `test or `live"];
   
   lib: $[typ ~ `public; `mkt; `ord];
 
-  if[.ut.isNull .cli.MAIN; .cli.MAIN: .cli[typ][env]];
+  arg: raze (env; x[2 3 4]);
+
+  if[.ut.isNull .cli.MAIN; .cli.MAIN: .cli[typ] . arg];
 
   .cli[upper lib]: .cli.MAIN;
 
@@ -75,7 +81,7 @@
   ];
   
   if[not lib in .api.loaded; .api.load lib];
-  
+
   .ref.cache[lib][];
 
   `apiInit};
