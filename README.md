@@ -319,6 +319,10 @@ status        | `active
 settled       | ,"0"
 stop          | `loss
 stop_price    | 9881f
+id                                   price size product_id profile_id                           side type  time_in_force post_only created_at              fill_fees filled_size executed_value status settled stop stop_price
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+fbd4ec20-afc4-4524-b469-0ee55adb12cc 9880  0.01 BTC-USD    7645849f-1de8-46df-af97-38865f0e3876 sell limit GTC           ,"0"      2020.02.08T21:19:50.592 0         0           0              active ,"0"    loss 9881      
+
 
 q).ord.getOrder[r`id]
 id            | fbd4ec20-afc4-4524-b469-0ee55adb12cc
