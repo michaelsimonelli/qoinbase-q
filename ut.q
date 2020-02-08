@@ -2,6 +2,8 @@
 // General Utility
 // ______________________________________________
 
+.ut.lg:{ -1 (string .z.z)," [CLI] ", x};
+
 .ut.isSym:{ -11h = type x };
 
 .ut.isStr:{ 10h = type x };

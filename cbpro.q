@@ -11,9 +11,6 @@
 .ut.params.registerOptional[`cbpro; `CBPRO_API_SECRET; `;"Coinbase Pro API secret key"];
 .ut.params.registerOptional[`cbpro; `CBPRO_API_PASSPHRASE; `;"Coinbase Pro API user passphrase"];
 
-// API env endpoints
-.api.URLS:`live`test!("https://api.pro.coinbase.com"; "https://api-public.sandbox.pro.coinbase.com");
-
 // Main Client
 .CLI.main:();
 
@@ -24,7 +21,7 @@
 .CLI.ord:();
 
 .cbpro.cli.public:{[env]
-  apiurl: .env.endpoint[env];  
+  apiurl: .api.endpoint[env];  
 
   client: .cbpro.priv.addFuncs .cbpro.PublicClient[apiurl];
 
@@ -35,7 +32,7 @@
 
   .sim.x:x;
   env: .ut.xposi[x; 0; `env];
-  apiurl: .env.endpoint[env];
+  apiurl: .api.endpoint[env];
   auth: .cbpro.priv.access . x[1 2 3];
 
   if[any .ut.isNull each auth;
@@ -49,38 +46,31 @@
 // API CONTEXT
 /////////////////////////////
 
-.api.loaded:();
 .api.inst:();
+
+.api.loaded:();
+
+.api.URLS:`live`test!("https://api.pro.coinbase.com"; "https://api-public.sandbox.pro.coinbase.com");
+
+.api.endpoint:{[x] .ut.assert[not .ut.isNull u: .api.URLS[x]; "env must be one of (",(.Q.s1 key .api.URLS),")"]; u};
 
 .api.load:{[l]
   dir: getenv `CBPRO_APP_DIR;
+  .ut.lg"Loading ",(string l)," api library";
   if[@[{system x;1b};"l ",("/" sv (dir; l$:)),".q";0b];
     .api.loaded,:l];
   };
 
-.api.init:{[env]
-  .CLI.main: .cbpro.cli.auth[env];
-  .CLI.mkt: .CLI.ord: .CLI.main;
-
-  if[not `mkt in .api.loaded; .api.load `mkt];
-  if[not `ord in .api.loaded; .api.load `ord];
-
-  .ref.cache.mkt[];
-  .ref.cache.ord[];
-
-  .api.inst: .api.inst union `mkt`ord;
-
-  `mkt`ord};
-
-.api.init0: .ut.xfunc {[x]
+.api.init: .ut.xfunc {[x]
   typ: .ut.xposi[x; 0; `typ];
   lib: .ut.xposi[x; 1; `lib];
   env: .ut.xposi[x; 2; `env];
 
-  if[(lib=`ord) and not `mkt in .api.inst; '"Dependency: Market api must be initialized"];
+  if[(lib=`ord) and not `mkt in .api.inst; .api.init[typ;`mkt;env]];
   
-  if[not lib in .api.loaded;
-    .api.load lib];
+  .ut.lg"Initialing ",(string lib)," api client";
+
+  if[not lib in .api.loaded; .api.load lib];
 
   cli: $[.ut.isNull .CLI.main; .cbpro.cli[typ] . (2 _ x); .CLI.main];
 
@@ -97,9 +87,6 @@
 ///
 // PRIVATE CONTEXT
 /////////////////////////////
-
-.env.endpoint:{[x] .ut.assert[not .ut.isNull u: .api.URLS[x]; "env must be one of (",(.Q.s1 key .api.URLS),")"]; u};
-
 .cbpro.priv.access:{[api_key;secret;passphrase]
   a: .ut.default[api_key;     `$getenv `CBPRO_API_KEY];
   s: .ut.default[secret;      `$getenv `CBPRO_API_SECRET];

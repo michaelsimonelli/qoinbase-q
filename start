@@ -9,7 +9,7 @@ fi
 export CBPRO_APP_DIR="$PWD";
 # Enter Coinbase Pro credentials
 export CBPRO_API_KEY=""
-export CBPRO_API_SIGN=""
+export CBPRO_API_SECRET=""
 export CBPRO_API_PASSPHRASE=""
 
 $QCMD cbpro.q "$@"
