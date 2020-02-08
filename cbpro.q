@@ -74,6 +74,8 @@
     ];
   ];
   
+  if[not lib in .api.loaded; .api.load lib];
+  
   .ref.cache[lib][];
 
   `apiInit};
