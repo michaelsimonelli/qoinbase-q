@@ -21,25 +21,25 @@
 .cli.ORD:();
 
 .cli.public:{[env]
-  apiurl: .api.endpoint[env];  
+  url: .api.endpoint[env];  
 
-  client: .cli.priv.addFuncs .cli.PublicClient[apiurl];
+  cli: .cli.priv.addFuncs .cli.PublicClient[url];
 
-  client};
+  cli};
 
 .cli.auth: .ut.xfunc {[x]
   .ut.assert[(count x) in 1 4;"Invalid number of arguments, accepts valence of 1 OR 4"];
 
   env: .ut.xposi[x; 0; `env];
-  apiurl: .api.endpoint[env];
-  auth: .cli.priv.access . x[1 2 3];
+  url: .api.endpoint[env];
+  ath: .cli.priv.access . x[1 2 3];
 
-  if[any .ut.isNull each auth;
+  if[any .ut.isNull each ath;
     '"Invalid authentication", $[(count x)=1; ", check env vars: `CBPRO_API_KEY`CBPRO_API_SIGN`CBPRO_API_PASSPHRASE";""]];
 
-  client: .cli.priv.addFuncs .cbpro.AuthenticatedClient . ((value auth),enlist apiurl);
+  cli: .cli.priv.addFuncs .cbpro.AuthenticatedClient . ((value ath),enlist url);
 
-  client};
+  cli};
 
 ///
 // API CONTEXT
@@ -66,20 +66,15 @@
 
   if[.ut.isNull .cli.MAIN; .cli.MAIN: .cli[typ][env]];
 
-  if[lib ~ `ord;
-    if[not `mkt in .api.loaded;
-      .api.load `mkt;
-      .cli.MKT: .cli.MAIN;
-    ];
-  ];
-
-  if[not lib in .api.loaded; .api.load lib];
-
   .cli[upper lib]: .cli.MAIN;
 
+  if[lib ~ `ord;
+    if[not `mkt in .api.loaded;
+      .api.load `mkt; .cli.MKT: .cli.MAIN;
+    ];
+  ];
+  
   .ref.cache[lib][];
-
-  .api.inst,: lib;
 
   `apiInit};
 
@@ -113,6 +108,3 @@
   c[`getEnv]: .cli.priv.getEnv c;
   c[`setEnv]: .cli.priv.setEnv c;
   c};
-
-
-/$[.ut.isTable r;             0b;             .ut.isNull r;               1b;               .ut.isDict r;                 (`message in key r);                 0b];
