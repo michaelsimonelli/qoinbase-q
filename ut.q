@@ -40,8 +40,8 @@
 
 .ut.kwargs.pop: .ut.xfunc {[x]
   p: .ut.xposi[x; 0; `params];
-  f: .ut.default[x 1; count[p]#(::)];
-  v: .ut.xposi[x; 2; `values];
+  v: .ut.xposi[x; 1; `values];
+  f: .ut.default[x 2; count[p]#(::)];
   k: (count[p]#.py.none);
   i: not .py.isNone each v;
   r: .ut.kwargs.upd[p;k;f;v] where i;

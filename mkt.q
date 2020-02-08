@@ -149,7 +149,7 @@
   granularity: .ut.default[x 1; `];
   start:       .ut.default[x 2; `];
   end:         .ut.default[x 3; `];
-  kwargs: .ut.kwargs.pop[`granularity`start`end; (::;.ut.q2iso;.ut.q2iso); (granularity;start;end)];
+  kwargs: .ut.kwargs.pop[`granularity`start`end; (granularity;start;end); (::;.ut.q2iso;.ut.q2iso)];
   res: .cli.MKT.get_product_historic_rates[pid; pykwargs kwargs];
   rates: `time`low`high`open`close`volume!flip "zfffff"$/:.[res; (::; 0); .scm.fn.epoch];
   flip rates};
@@ -197,7 +197,7 @@
   res: .py.list .cli.MKT.get_product_trades[pid; pykwargs kwargs];
   trades: .scm.cast res;
   trades};
-
+ 
 ///
 // Snapshot about the last trade (tick), best bid/ask and 24h volume
 //
@@ -299,7 +299,7 @@
   res: @[book; `bids`asks; flip fmt[1]!flip fmt[0]$/:];
   res};
 
-  
+
 ///////////////////////////////////////
 // REFERENCE DATA                    //
 ///////////////////////////////////////
