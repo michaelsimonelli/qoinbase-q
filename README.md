@@ -1,9 +1,9 @@
 # Q Client  - Coinbase Pro
 The recent boom in cryptocurrency has ushered in a wave of technological innovation - and propelled algo-trading to the top of the trend charts. This paper discusses a real world application of q/kdb technology through an operating interface to [Coinbase Pro API](https://docs.pro.coinbase.com/). This easy to use and install interface leverages kdb+ fusion technology [embedPy](https://code.kx.com/q/ml/embedpy/) to create an interactive trading and market data client for the Coinbase Pro API that provides seamless integration between trade execution, order management, and the real-time, in-memory computational power of kdb.
 
-== Why do we want to do this in kdb? We should make a point here of why bother doing this in kdb instead of Python (other than that we want to because we're q devs)? Can we put some metrics on how much data there is to process in a typical day and argue we can do it more efficiently in q? ==
+> **Why do we want to do this in kdb?**:  We should make a point here of why bother doing this in kdb instead of Python (other than that we want to because we're q devs)? Can we put some metrics on how much data there is to process in a typical day and argue we can do it more efficiently in q? 
 
-<!--- What is Coinbase Pro API? I know you want people to read the linked documentation, but I think we will need to add a sentence in the introduction explaining what Coinbase is and what the API is for -->
+> **What is Coinbase Pro API?**:  I know you want people to read the linked documentation, but I think we will need to add a sentence in the introduction explaining what Coinbase is and what the API is for.
 
 #### Benefits
 - Intuitive q/kdb wrapper for both public and  authenticated endpoints.
@@ -207,9 +207,9 @@ Once initialized, the market and order libraries are accessed via the **.mkt** a
 
 #### Market Data Library
 Useful functions to query and interact with public market data
+> **Function descriptions**:  You should add a description in English on what each of the functions does
 
 **getCurrencies**
-<!-- you should add a description for what each of the functions doe -->
 
 ```q
 q).mkt.getCurrencies[]
@@ -510,8 +510,7 @@ stop_price    | 9881f
 ```
 > For in-depth docs on every API function, see [qoinbase-q](https://github.com/michaelsimonelli/qoinbase-q)
 
-!!! Use case
-   I think that the APIs you show are really neat, but I think that it would be really nice to show an application of (some of) these APIs. Could we maybe set up something that charts prices/volumes of different coins that trade on coinbase, or some sort of a simple trading signal generation. I don't know, my knowledge of crypto is limited, but I assume you created this with some use case in mind (which you may or may not want to disclose in a paper) and not just for fun?
+> **Use case?**: I think that the APIs you show are really neat, but I think that it would be really nice to show an application of (some of) these APIs. Could we maybe set up something that charts prices/volumes of different coins that trade on coinbase, or some sort of a simple trading signal generation. I don't know, my knowledge of crypto is limited, but I assume you created this with some use case in mind (which you may or may not want to disclose in a paper) and not just for fun?
 
 
 ## extendPy
