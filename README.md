@@ -1,11 +1,9 @@
 # Q Client  - Coinbase Pro
 The recent boom in cryptocurrency has ushered in a wave of technological innovation - and propelled algo-trading to the top of the trend charts. This paper discusses a real world application of q/kdb technology through an operating interface to [Coinbase Pro API](https://docs.pro.coinbase.com/). This easy to use and install interface leverages kdb+ fusion technology [embedPy] (https://code.kx.com/q/ml/embedpy/) to create an interactive trading and market data client for the Coinbase Pro API that provides seamless integration between trade execution, order management, and the real-time, in-memory computational power of kdb.
 
-!!! Why do we want to do this in kdb? !!!
-    We should make a point here of why bother doing this in kdb instead of Python (other than that we want to because we're q devs)? Can we put some metrics on how much data there is to process in a typical day and argue we can do it more efficiently in q?
+<!-- Why do we want to do this in kdb? We should make a point here of why bother doing this in kdb instead of Python (other than that we want to because we're q devs)? Can we put some metrics on how much data there is to process in a typical day and argue we can do it more efficiently in q? -->
 
-!!! What is Coinbase Pro API
-    I know you want people to read the linked documentation, but I think we will need to add a sentence in the introduction explaining what Coinbase is and what the API is for
+<!-- What is Coinbase Pro API? I know you want people to read the linked documentation, but I think we will need to add a sentence in the introduction explaining what Coinbase is and what the API is for -->
 
 #### Benefits
 - Intuitive q/kdb wrapper for both public and  authenticated endpoints.
