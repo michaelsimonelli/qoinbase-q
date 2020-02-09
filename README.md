@@ -133,10 +133,8 @@ Sandbox is available for testing API connectivity and web trading. While the san
 
 Communication to the API is established via an embedded python module, which utilizes an HTTP request library to simplifying the handling of responses from the API. The module is abstracted and mapped directly into a callable kdb context - allowing for native API interaction.
 
-**PublicClient**
-Essentially a market data API, the public client is an unauthenticated set of endpoints for retrieving market data. 
-
-Instantiate a public client
+PublicClient
+: Essentially a market data API, the public client is an unauthenticated set of endpoints for retrieving market data. 
 ```q
 // production
 q) pc:.cbpro.PublicClient[]
@@ -144,10 +142,9 @@ q) pc:.cbpro.PublicClient[]
 q) pc:.cbpro.PublicClient["https://api-public.sandbox.pro.coinbase.com"]
 ```
 
-**AuthenticatedClient**
-Authenticated endpoints for placing order and account management. API access must be setup within your [account](https://www.pro.coinbase.com/profile/api) or [sandbox](https://public.sandbox.pro.coinbase.com/profile/api) environment. 
+AuthenticatedClient
+: Authenticated endpoints for placing order and account management. API access must be setup within your [account](https://www.pro.coinbase.com/profile/api) or [sandbox](https://public.sandbox.pro.coinbase.com/profile/api) environment. 
 
-Instantiate an authenticated client
 ```q
 // production
 q)ac:.cbpro.AuthenticatedClient["key"; "secret"; "passphrase"]
