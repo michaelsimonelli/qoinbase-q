@@ -16,7 +16,7 @@
 .scm.ldjn:{r:x where (type each x)=99h;((distinct raze(key@/:r))#/:r)};
 .scm.cfrm:{$[not .scm.rcvt x;{{?[.ut.isNull'[x];(x#:)#("",:);]x}.ut.toStr x};]x};
 .scm.rcvt:{t:{$[.ut.isGList x;.scm.rcvt;type]x}'[x];first $[1<count t;{(0h,x)({min x=/:y}.(0 1) cut x)};]t};
-.scm.tryCast:{if[any 99h=type each y; :y]; y:.scm.cfrm[y]; if[x~.ut.typ.map type y 0; :y]; $[.scm.canCast[x]y; x$;]y};
+.scm.tryCast:{if[any 99h=type each y; :y]; y:.scm.cfrm[y]; if[x~.ut.typ.map type @[first;y;{y;x 0}y]; :y]; $[.scm.canCast[x]y; x$;]y};
 .scm.canCast:{[x;y] .[{nw:x$"";if[not x in"BGXCS";nw:(min 0#;max 0#;::)@\:nw];$[not any nw in x$11#y;$[11<count y;not any nw in x$y;1b];@[{x$y;1b}[x];y;0b]]};(x;y);0b]};
 
 
@@ -80,7 +80,7 @@
   (`quote_currency          , `symbol);
   (`convertible_to          , `symbol);
   (`push_payment_methods    , `symbol);
-  (`time                    , `xtime);
+  (`time                    , `qtime);
   (`done_at                 , `iso);
   (`created_at              , `iso);
   (`expire_time             , `iso);
@@ -100,5 +100,3 @@
   (`processing_time_seconds , `int));
 
 .scm.map: exec field!.scm.fn[cast] from .scm.ref;
-
-  
