@@ -2,7 +2,9 @@
 The crypto boom continues to encourage technological innovation, one of the more prominent trends is the development of of algorithmic trading clients and applications. Kx has been a stalwart in this domain for over a decade, renowned for its ability to combine streaming, in-memory, and historical data in a unified high-performance platform, kdb+ is the technology of choice when it comes to enterprise algorithmic compute engines. In continuing to explore q in the crypto space, this paper seeks to harness that power of a kdb+ into a light weight, standalone algorithmic-trading app. 
 
 This part 1 of a 2 part series.
+
 **Part 1** - Q Client, API Interface
+
 **Part 2** - Data subscription, real-time order book, strategy triggers
 
 The Q client provides an API interface to the [Coinbase Pro API](https://docs.pro.coinbase.com/).
@@ -214,6 +216,7 @@ Once initialized, the market and order libraries are accessed via the **.mkt** a
 Useful functions to query and interact with public market data
 
 **getCurrencies**
+
 List available currencies and their meta data
 ```q
 q).mkt.getCurrencies[]
@@ -229,6 +232,7 @@ ETH | Ether                 1e-08    online ""      1e-08         `
 USDC| USD Coin              1e-06    online ""      1e-06         ,`USD         
 ```
 **getProducts**
+
 List of available currency pairs for trading along with meta info
 ```q
 q).mkt.getProducts[]
@@ -243,6 +247,7 @@ ETHBTC  | ETH-BTC   ETH           BTC            0.01          1000000       1e-
   
 ```
 **getProduct24hrStats**
+
 Get 24 hr stats for a given product
 ```q
 q).mkt.getProduct24hrStats[`BTCUSD]
@@ -254,6 +259,7 @@ last        | 9897.87
 volume_30day| 6333819
 ```
 **getProductHistoricRates**
+
 Get historic rates for a product.
 Rates are returned in grouped buckets based on requested granularity.
 
@@ -270,6 +276,7 @@ time                    low     high    open    close   volume
 2020.02.07T08:00:00.000 9775.91 9779.41 9779.39 9775.91 523.4472
 ```
 **getProductTrades**
+
 List the trades for a product.
 Can pass a set of intervals along with a limit for number of records
 ```q
@@ -288,6 +295,7 @@ time                       trade_id price   size   side
 "2020-02-08T22:54:44.336Z" 9185680  9922.56 0.001  sell
 ```
 **getProductTicker**
+
 Snapshot about the last trade (tick), best bid/ask, and 24h volume
 
 **CAUTION** Polling is discouraged in favor of connecting via the websocket stream and listening for match messages.
@@ -302,6 +310,7 @@ ask     | 9922.57
 volume  | 39693.91
 ```
 **getProductOrderBook**
+
 Get a list of open orders for a product
 Book can be returned at three different levels: Top of book, aggregated, and full order book
 ```q
@@ -314,6 +323,7 @@ asks    | +`price`size`num!(9922.57 9922.58 9922.59 9922.6 9922.61 9922.62 9922.
 Helper functions for viewing and analyzing account info as well as enhanced order execution functionality.
 
 **getAccounts**
+
 Get a list of trading accounts.
 ```q
 q).ord.getAccounts[]
@@ -329,6 +339,7 @@ id                                   currency balance      available    hold    
 00000000-0000-0000-0000-000000000000 BAT      1000000      1000000      0       00000000-0000-0000-0000-000000000000 1                      
 ```
 **getAccountHistory**
+
 List account activity
 Account activity either increases or decreases your account balance.
 ```q
@@ -346,6 +357,7 @@ created_at              id        amount        balance      type
 2020.01.04T17:21:13.736 94139789  -0.00545112   2.647179e+07 fee 
 ```
 **getFills**
+
 Get a list of recent fills
 Can filter based on parameters
 ```q
@@ -360,6 +372,7 @@ reated_at              trade_id product_id order_id                             
 2020.02.08T21:07:30.593 9183495  BTC-USD    00000000-0000-0000-0000-000000000000 00000000000000000000000 00000000-0000-0000-0000-000000000000 T         9864.74 0.1        4.93237    buy  1       986.474   
 ```
 **getOrders**
+
 List orders
 Filter results based on parameters
 ```q
@@ -376,6 +389,7 @@ id                                   price   size               product_id profi
 
 #### Trade Execution
 **Market Order**
+
 Places a market order
 ```q
 // parameters:
@@ -419,6 +433,7 @@ settled       | ,"1"
 ```
 
 **Limit Order**
+
 Places a limit order
 ```q
 // parameters:
@@ -464,6 +479,7 @@ settled       | ,"1"
 ```
 
 **Stop Loss**
+
 Creates a stop loss limit order
 ```q
 // parameters:
@@ -512,6 +528,7 @@ stop_price    | 9881f
 ```
 
 **Stop Entry**
+
 Creates a stop entry limit order
 ```q
 // parameters:
@@ -701,7 +718,7 @@ id trade_id trade_side cover_id  cover_side  trade_price trade_usd   cover_price
 3  xxxx     buy        xxxx      sell        6401.23     640123      7097.08     709708    695.846 69584.6
 ```
 Chart with trigger signals
-![trade chart](https://raw.githubusercontent.com/michaelsimonelli/qoinbase-q/master/chart.png))
+![trade chart](https://raw.githubusercontent.com/michaelsimonelli/qoinbase-q/master/chart.png)
 
 ## extendPy
 *BETA library to extend the functionality of embedPy.*
