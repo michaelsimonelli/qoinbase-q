@@ -1,23 +1,31 @@
-# Q App - Part 1  - Q Client
-The crypto boom continues to encourage technological innovation, one of the more prominent trends is the development of of algorithmic trading clients and applications. Kx has been a stalwart in this domain for over a decade, renowned for its ability to combine streaming, in-memory, and historical data in a unified high-performance platform, kdb+ is the technology of choice when it comes to enterprise algorithmic compute engines. In continuing to explore q in the crypto space, this paper seeks to harness that power of a kdb+ into a light weight, standalone algorithmic-trading app. 
+# Q App - Part 1  - Q Client 
+>*Do you have a proper title of the paper in mind? Cyptocurrency Data Exploration in q, or something along those lines*
 
-This part 1 of a 2 part series.
+## Introduction
 
-**Part 1** - Q Client, API Interface
+The crypto boom continues to encourage technological innovation, one of the more prominent trends is the development of of algorithmic trading clients and applications. Kx has been a stalwart in this domain for over a decade, renowned for its ability to combine streaming, in-memory, and historical data in a unified high-performance platform, kdb+ is the technology of choice when it comes to enterprise algorithmic compute engines. ~~In continuing to explore q in the crypto space, this paper series seeks to harness that power of kdb+ into a light weight, standalone algorithmic-trading app. ~~
+>*Something along the lines of .... This two-part paper series seeks to explore cryptocurrency data with q. This paper intoduces a q client developed to interface with the Coinbase Pro API with the objective of harnessing the power of kdb+ into a lightweight, standalone algorithmic app. In the second paper we will utilize this q client for real-time data subscription and explore applications in order book construction and strategy triggers.*
 
-**Part 2** - Data subscription, real-time order book, strategy triggers
+~~This is part 1 of a 2 part series.
+
+~~**Part 1** - Q Client, API Interface
+
+~~**Part 2** - Data subscription, real-time order book, strategy triggers
+
+## Q Client for Coinbase Pro API
 
 The Q client provides an API interface to the [Coinbase Pro API](https://docs.pro.coinbase.com/).
-Coinbase Pro is a US-based crypto exchange, facilitating the buying and selling of cryptocurrencies. The Coinbase Pro API is a programmatic interface allowing applications to interact with the exchange.
+Coinbase Pro is a US-based crypto exchange, facilitating the buying and selling of cryptocurrencies. The Coinbase Pro API is a programmatic interface allowing applications to interact with the exchange. 
+>Mention here that the API is in python - this will make it clear why we're making references to datatype conversion, pagination etc in the section that follows 
 
-**Client Details**
-- Market data and order management library
-- Auto pagination of API results, converts and casts into native q datatypes.
-- Extension methods for more complex order types (stop loss, stop entry).
+**~~Client Details~~ Q client offers:**
+- Market data and order management library in q
+- Auto pagination of API results, converts and casts into native q datatypes
+- Extension methods for more complex order types (stop loss, stop entry)
 - Leverages kdb+ fusion to handle HTTP requests
 *By using fusion to embed a python module in q, one could ask why not just implement the entire application in python? What makes q worth the trouble?*
 Simply because data is a first class object in kdb - and that's what we care about.
-By integrating execution control INTO kdb, we have much more explicit control of the data. We can quickly query, access, manipulate and transform the data in ways that would be limited in python.s
+By integrating execution control into kdb, we have much more explicit control of the data. We can quickly query, access, manipulate and transform the data in ways that would be limited in python.
 
 > In order to utilize Coinbase Pro to its full potential, recommend becoming familiar with the [official documentation](https://docs.pro.coinbase.com/)
  **PLEASE BE AWARE, LIVE TRADING ENABLED**
@@ -53,7 +61,7 @@ If the client was launched successfully, you should see an output like this:
 ```
 And we are good to go, the client can be used out of the box with little to no configuration!
 
-## Introduction
+## ~~Introduction~~ Q Client Manual
 Our library is stored in the **.cbpro** namespace. At a quick glimpse, this library contains:
 ```q
 q)key `.cbpro
@@ -62,7 +70,7 @@ q)key `.cbpro
 The 'clients' are projected functions that instantiate an underlying python class.
 When a function is called, it returns a function library of the underlying class' methods and properties (stored as a dictionary) - giving q a pseudo object oriented implementation.
 
-#### Instantiating a Class
+### Instantiating a Class
 ```q
 q)pc:.cbpro.PublicClient[]
                           | ::
@@ -78,7 +86,7 @@ url                       | {[qco; arg]
   acc: $[arg~(::); [arg:`; `get]; `set];
 ..
 ```
-#### Calling a function
+### Calling a function
 Standard embedPy convention applies when calling auto-mapped instance methods
 ```q
 q)pc.get_product_historic_rates["BTC-USD"; `granularity pykw 300]
@@ -90,7 +98,7 @@ q)pc.get_product_historic_rates["BTC-USD"; `granularity pykw 300]
 1581165300 9808.53 9831.87 9817.91 9828.18 34.51228 
 1581165000 9803.68 9840.01 9840    9814.1  86.51028 
 ```
-#### Accessing properties
+### Accessing properties
 To *get* a property, call as a *nullary* function
 ```q
 q)pc.url[]
@@ -102,7 +110,7 @@ q)pc.url["newUrl"]
 q)pc.url[]
 "newUrl"
 ```
-#### Pagination and Generators 
+### Pagination and Generators 
 Some calls are [paginated](https://docs.pro.coinbase.com/#pagination), meaning multiple calls must be made to receive the full set of data. Python abstracts this away as a generator, but kdb has no means of accessing a python generator. 
 
 With the standard mapped function, the result we be returned as foreign and an iterator will have to be called on the data to access it.
@@ -135,7 +143,7 @@ created_at              trade_id product_id order_id                            
 ```
 >See appendix for more details on python reflection
 
-## Coinbase Pro API Client
+## Configuring q Client for Coinbase Pro API
 The Coinbase Pro REST API is segregated into two endpoints: **trading** and **feed**. Trading APIs require authentication and provide access to placing orders and other account information. Feed APIs provide market data and are public. 
 
 Coinbase also offers two environments: **production** and **sandbox**. 
@@ -164,7 +172,7 @@ q)ac:.cbpro.AuthenticatedClient["key"; "secret"; "passphrase"; "https://api-publ
 The `AuthenticatedClient` inherits all methods from the `PublicClient` class, so you will only need to initialize one if you are planning to integrate both into your script. 
 
 ### The API Library
-An enhanced library is provided for both the market and order API (feed and trade). This library wraps the standard auto-mapped functions to provide additionally functionality and benefits.
+An enhanced q library is provided for both the market and order API (feed and trade). This library wraps the standard auto-mapped functions to provide additionally functionality and benefits.
 - conventional q execution
 - seamless datatype conversion
 - auto-pagination of iterators
@@ -212,8 +220,8 @@ q).api.init[`auth;`test]
 
 Once initialized, the market and order libraries are accessed via the **.mkt** and **.ord** namespaces, respectively.
 
-#### Market Data Library
-Useful functions to query and interact with public market data
+### Market Data Library
+This library contains Useful q functions to query and interact with public market data.
 
 **getCurrencies**
 
@@ -233,7 +241,7 @@ USDC| USD Coin              1e-06    online ""      1e-06         ,`USD
 ```
 **getProducts**
 
-List of available currency pairs for trading along with meta info
+List of available currency pairs for trading along with meta info.
 ```q
 q).mkt.getProducts[]
 sym     | id        base_currency quote_currency base_min_size base_max_size quote_increment base_increment display_name min_market_funds max_market_funds margin_enabled post_only limit_only cancel_only status status_message
@@ -387,7 +395,7 @@ id                                   price   size               product_id profi
 00000000-0000-0000-0000-000000000000         "0.10000000"       BTC-USD    7645849f-1de8-46df-af97-38865f0e3876 buy  market               0         2020.02.08T21:07:30.588 2020.02.08T21:07:30.593 filled      4.93237    0.1         986.474        done   1                        2.634028e+07                
 ```
 
-#### Trade Execution
+#### Trade Execution Library
 **Market Order**
 
 Places a market order
@@ -578,8 +586,8 @@ stop          | `entry
 stop_price    | 9881f
 ```
 > For in-depth docs on every API function, see [qoinbase-q](https://github.com/michaelsimonelli/qoinbase-q)
-### Example Application
-Simple Moving Average Crossover Strategy
+
+### Example Application: Simple Moving Average Crossover Strategy
 Using short and long term trends to identify trading opportunities -  A buy or sell signal is triggered once the shorter term moving average crosses above or below, the larger moving average. Moving averages are defined by their periodicity, but the intervals themselves can be minutes, hours, or even days.
 >Example assumes CBPRO_API_KEY envrionment variables are configured in startup script.
 
@@ -611,7 +619,8 @@ QTY:100;
 
 ///
 // Strategy initialization
-// Instantiate the rates table and trend value.
+// Instantiate the rates table and trend value
+> I feel we need to explain in Englsh what's going on here
 .strat.init:{[]}
   .st.rates:asc .mkt.getProductHistoricRates[PRODUCT];
   .st.rates:update SPMA:SP mavg close,LPMA:LP mavg close from .st.rates;
@@ -621,6 +630,14 @@ QTY:100;
 .strat.init[];
 ```
 **Strategy Calculation and Logic**
+
+Requests the latest pricing data (the above example is sampling 1 minute bars) and calculates the latest trend.
+If there is new pricing data, the rates table is updated with the latest info.
+If there is no change in the trend, the function exists.
+If there is a change in the trend, the function will check if a position is currently open.
+If there is no open position, a trade is executed based on the MVA crossover and the position info is stored.
+If there is an open position, it is covered (sell position covered by a buy and vice-versa), and a new position is opened.
+
 ```q
 .strat.calc:{[]
   lastTime: (last .st.rates)`time;
@@ -653,13 +670,6 @@ QTY:100;
   `.st.rates upsert upd;
   -15#.st.rates};
 ```
-Requests the latest pricing data (the above example is sampling 1 minute bars) and calculates the latest trend.
-If there is new pricing data, the rates table is updated with the latest info.
-If there is no change in the trend, the function exists.
-If there is a change in the trend, the function will check if a position is currently open.
-If there is no open position, a trade is executed based on the MVA crossover and the position info is stored.
-If there is an open position, it is covered (sell position covered by a buy and vice-versa), and a new position is opened.
-
 **Execution Functions**
 ```q
 ///
@@ -720,7 +730,9 @@ id trade_id trade_side cover_id  cover_side  trade_price trade_usd   cover_price
 Chart with trigger signals
 ![trade chart](https://raw.githubusercontent.com/michaelsimonelli/qoinbase-q/master/chart.png)
 
-## extendPy
+## Appendix
+
+### extendPy
 *BETA library to extend the functionality of embedPy.*
 It's core functionality is to provide seamless reflection of a python module into callable q context. It achieves this through recursively inspecting the python module and its members, building a dictionary mapping of *member name* **->** *instance object*, and then importing that dictionary into kdb as a dictionary of projections. The source code is available here [extendPy](https://github.com/michaelsimonelli/extendPy)
 
