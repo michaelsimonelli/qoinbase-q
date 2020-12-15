@@ -1,16 +1,27 @@
-# Q Client  - Coinbase Pro
-The recent boom in cryptocurrency has ushered in a wave of technological innovation - and propelled algo-trading to the top of the trend charts. As an industry leader in this domain, Kx continues to push the boundaries of its high-performance database platform. In this paper, we'll explore the versatility of q - by leveraging kdb+ fusion technology (embedPy), we've created an interactive trading and market data client for the [Coinbase Pro API](https://docs.pro.coinbase.com/). Simple to use, and easy to install, the client provides seamless integration between trade execution, order management, and the real-time, in-memory computational power of kdb.
+# Q App - Part 1  - Q Client
+The crypto boom continues to encourage technological innovation, one of the more prominent trends is the development of of algorithmic trading clients and applications. Kx has been a stalwart in this domain for over a decade, renowned for its ability to combine streaming, in-memory, and historical data in a unified high-performance platform, kdb+ is the technology of choice when it comes to enterprise algorithmic compute engines. In continuing to explore q in the crypto space, this paper seeks to harness that power of a kdb+ into a light weight, standalone algorithmic-trading app. 
 
-#### Benefits
-- Intuitive q/kdb wrapper for both public and  authenticated endpoints.
-- Abstraction of API calls/HTTP requests
-- Easy to use functions, conventional q execution and access.
+This part 1 of a 2 part series.
+
+**Part 1** - Q Client, API Interface
+
+**Part 2** - Data subscription, real-time order book, strategy triggers
+
+The Q client provides an API interface to the [Coinbase Pro API](https://docs.pro.coinbase.com/).
+Coinbase Pro is a US-based crypto exchange, facilitating the buying and selling of cryptocurrencies. The Coinbase Pro API is a programmatic interface allowing applications to interact with the exchange.
+
+**Client Details**
+- Market data and order management library
 - Auto pagination of API results, converts and casts into native q datatypes.
 - Extension methods for more complex order types (stop loss, stop entry).
+- Leverages kdb+ fusion to handle HTTP requests
+*By using fusion to embed a python module in q, one could ask why not just implement the entire application in python? What makes q worth the trouble?*
+Simply because data is a first class object in kdb - and that's what we care about.
+By integrating execution control INTO kdb, we have much more explicit control of the data. We can quickly query, access, manipulate and transform the data in ways that would be limited in python.s
 
-This API attempts to highlight real world application of q/kdb technology through an operating interface to Coinbase Pro, in order to use it to its full potential, you must familiarize yourself with the official documentation. **PLEASE BE AWARE, LIVE TRADE EXECUTION ENABLED**
+> In order to utilize Coinbase Pro to its full potential, recommend becoming familiar with the [official documentation](https://docs.pro.coinbase.com/)
+ **PLEASE BE AWARE, LIVE TRADING ENABLED**
 
--   [https://docs.pro.coinbase.com/](https://docs.pro.coinbase.com/)
 
 ## Requirements
 - Linux
@@ -124,12 +135,11 @@ created_at              trade_id product_id order_id                            
 ```
 >See appendix for more details on python reflection
 
-## The API Client
+## Coinbase Pro API Client
 The Coinbase Pro REST API is segregated into two endpoints: **trading** and **feed**. Trading APIs require authentication and provide access to placing orders and other account information. Feed APIs provide market data and are public. 
 
 Coinbase also offers two environments: **production** and **sandbox**. 
-Sandbox is available for testing API connectivity and web trading. While the sandbox only hosts a subset of the production order books, all of the exchange functionality is available. Login sessions and API keys are separate from production. Use the sandbox web interface to create keys in the sandbox environment.
-[Sandbox Website](https://public.sandbox.pro.coinbase.com/)
+Sandbox is available for testing API connectivity and web trading. While the sandbox only hosts a subset of the production order books, all of the exchange functionality is available. Login sessions and API keys are separate from production. Use the [sandbox ](https://public.sandbox.pro.coinbase.com/)web interface to create keys in the sandbox environment.
 
 Communication to the API is established via an embedded python module, which utilizes an HTTP request library to simplifying the handling of responses from the API. The module is abstracted and mapped directly into a callable kdb context - allowing for native API interaction.
 
@@ -192,6 +202,7 @@ Supplied via config, and called with just *client* and *env* params
  export CBPRO_API_SECRET=""
  export CBPRO_API_PASSPHRASE=""
 ```
+>please view the **start** script for environment variables 
 ```q
 // Auth client, via config
 q).api.init[`auth;`test]
@@ -205,6 +216,8 @@ Once initialized, the market and order libraries are accessed via the **.mkt** a
 Useful functions to query and interact with public market data
 
 **getCurrencies**
+
+List available currencies and their meta data
 ```q
 q).mkt.getCurrencies[]
 id  | name                  min_size status message max_precision convertible_to
@@ -219,6 +232,8 @@ ETH | Ether                 1e-08    online ""      1e-08         `
 USDC| USD Coin              1e-06    online ""      1e-06         ,`USD         
 ```
 **getProducts**
+
+List of available currency pairs for trading along with meta info
 ```q
 q).mkt.getProducts[]
 sym     | id        base_currency quote_currency base_min_size base_max_size quote_increment base_increment display_name min_market_funds max_market_funds margin_enabled post_only limit_only cancel_only status status_message
@@ -232,6 +247,8 @@ ETHBTC  | ETH-BTC   ETH           BTC            0.01          1000000       1e-
   
 ```
 **getProduct24hrStats**
+
+Get 24 hr stats for a given product
 ```q
 q).mkt.getProduct24hrStats[`BTCUSD]
 open        | 9779.96
@@ -242,6 +259,12 @@ last        | 9897.87
 volume_30day| 6333819
 ```
 **getProductHistoricRates**
+
+Get historic rates for a product.
+Rates are returned in grouped buckets based on requested granularity.
+
+**CAUTION** Historical rates should not be polled frequently. 
+If you need real-time information, use the trade and book endpoints along with the websocket feed.
 ```q
 q).mkt.getProductHistoricRates[`BTCUSD; 900; 2020.02.07T08:00:00.000; 2020.02.07T09:00:00.000]
 time                    low     high    open    close   volume  
@@ -253,6 +276,9 @@ time                    low     high    open    close   volume
 2020.02.07T08:00:00.000 9775.91 9779.41 9779.39 9775.91 523.4472
 ```
 **getProductTrades**
+
+List the trades for a product.
+Can pass a set of intervals along with a limit for number of records
 ```q
 q).mkt.getProductTrades[`BTCUSD;9185670;9185690;10]
 time                       trade_id price   size   side
@@ -269,6 +295,10 @@ time                       trade_id price   size   side
 "2020-02-08T22:54:44.336Z" 9185680  9922.56 0.001  sell
 ```
 **getProductTicker**
+
+Snapshot about the last trade (tick), best bid/ask, and 24h volume
+
+**CAUTION** Polling is discouraged in favor of connecting via the websocket stream and listening for match messages.
 ```q
 q).mkt.getProductTicker[`BTCUSD]
 trade_id| "9185706"
@@ -280,6 +310,9 @@ ask     | 9922.57
 volume  | 39693.91
 ```
 **getProductOrderBook**
+
+Get a list of open orders for a product
+Book can be returned at three different levels: Top of book, aggregated, and full order book
 ```q
 q).mkt.getProductOrderBook[`BTCUSD;2]
 sequence| 113917597
@@ -290,6 +323,8 @@ asks    | +`price`size`num!(9922.57 9922.58 9922.59 9922.6 9922.61 9922.62 9922.
 Helper functions for viewing and analyzing account info as well as enhanced order execution functionality.
 
 **getAccounts**
+
+Get a list of trading accounts.
 ```q
 q).ord.getAccounts[]
 id                                   currency balance      available    hold    profile_id                           trading_enabled
@@ -304,6 +339,9 @@ id                                   currency balance      available    hold    
 00000000-0000-0000-0000-000000000000 BAT      1000000      1000000      0       00000000-0000-0000-0000-000000000000 1                      
 ```
 **getAccountHistory**
+
+List account activity
+Account activity either increases or decreases your account balance.
 ```q
 q).ord.getAccountHistory[`USD;`fee;`]
 created_at              id        amount        balance      type
@@ -319,6 +357,9 @@ created_at              id        amount        balance      type
 2020.01.04T17:21:13.736 94139789  -0.00545112   2.647179e+07 fee 
 ```
 **getFills**
+
+Get a list of recent fills
+Can filter based on parameters
 ```q
 q).ord.getFills[`BTCUSD]
 reated_at              trade_id product_id order_id                             user_id                  profile_id                           liquidity price   size       fee        side settled usd_volume
@@ -331,6 +372,9 @@ reated_at              trade_id product_id order_id                             
 2020.02.08T21:07:30.593 9183495  BTC-USD    00000000-0000-0000-0000-000000000000 00000000000000000000000 00000000-0000-0000-0000-000000000000 T         9864.74 0.1        4.93237    buy  1       986.474   
 ```
 **getOrders**
+
+List orders
+Filter results based on parameters
 ```q
 ord.getOrders[`done]
 id                                   price   size               product_id profile_id                           side type   time_in_force post_only created_at              done_at                 done_reason fill_fees  filled_size executed_value status settled stop  stop_price funds        specified_funds
@@ -345,7 +389,14 @@ id                                   price   size               product_id profi
 
 #### Trade Execution
 **Market Order**
+
+Places a market order
 ```q
+// parameters:
+// sym  [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// side [symbol/string] - Order side ('buy' or 'sell)
+// size   [float] - Desired amount in crypto. Specify this or `funds` in kwargs.
+// kwargs [dict] - Keyword arguments
 q)r:.ord.placeMarketOrder[`BTCUSD;`buy;00.1]
 id            | 8d87bb96-beee-4550-9208-bbd49d05ee3d
 size          | 0.1
@@ -382,7 +433,15 @@ settled       | ,"1"
 ```
 
 **Limit Order**
+
+Places a limit order
 ```q
+// parameters:
+// sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// side   [symbol/string] - Order side ('buy' or 'sell)
+// price  [float] - Price per crypto.
+// size   [float] - Amount in crypto.
+// kwargs [dict] - Keyword arguments
 q)r:.ord.placeLimitOrder[`BTCUSD;`buy;9885;0.1]
 id            | 137a3307-e08d-4fde-a5ae-66091d162986
 price         | 9885f
@@ -420,7 +479,15 @@ settled       | ,"1"
 ```
 
 **Stop Loss**
+
+Creates a stop loss limit order
 ```q
+// parameters:
+// sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// stop_price [float] - Sets trigger price for stop order.
+// price  [float] - Price per crypto (limit).
+// size   [float] - Amount in crypto.
+// kwargs [dict] - Keyword arguments
 q)r:.ord.placeStopLoss[`BTCUSD;9881.00;9880.00;0.01]
 id            | fbd4ec20-afc4-4524-b469-0ee55adb12cc
 price         | 9880f
@@ -461,7 +528,15 @@ stop_price    | 9881f
 ```
 
 **Stop Entry**
+
+Creates a stop entry limit order
 ```q
+// parameters:
+// sym    [symbol/string] - ProductID. Accepts valid and simple forms: (`BTCUSD; "BTC-USD")
+// stop_price [float] - Sets trigger price for stop order.
+// price  [float] - Price per crypto (limit).
+// size   [float] - Amount in crypto.
+// kwargs [dict] - Keyword arguments
 r:.ord.placeStopEntry[`BTCUSD;9881.00;9885.00;0.01]
 q)id            | becf4781-9b97-43ef-bbdd-149db604a475
 price         | 9885f
@@ -503,6 +578,147 @@ stop          | `entry
 stop_price    | 9881f
 ```
 > For in-depth docs on every API function, see [qoinbase-q](https://github.com/michaelsimonelli/qoinbase-q)
+### Example Application
+Simple Moving Average Crossover Strategy
+Using short and long term trends to identify trading opportunities -  A buy or sell signal is triggered once the shorter term moving average crosses above or below, the larger moving average. Moving averages are defined by their periodicity, but the intervals themselves can be minutes, hours, or even days.
+>Example assumes CBPRO_API_KEY envrionment variables are configured in startup script.
+
+#### Initialize and configure
+```q
+///
+// Initialize the API libraries 
+.api.init[`auth;`test];
+
+///
+// Set strategy parameters
+
+// Product to trade
+PRODUCT:`BTCUSD;
+// Short term moving average period
+SP:10;
+// Long term moving average period
+LP:30;
+// Quantity to execute when signal is triggered
+QTY:100;
+
+///
+// Varaibles and tables to track current trading position
+.pos.itr:0;
+.pos.trade:([id:`long$()]trade_id:`guid$();trade_side:`symbol$())
+.pos.cover:([id:`long$()]cover_id:`guid$();cover_side:`symbol$())
+.pos.open:0b;
+.pos.side:`;
+
+///
+// Strategy initialization
+// Instantiate the rates table and trend value.
+.strat.init:{[]}
+  .st.rates:asc .mkt.getProductHistoricRates[PRODUCT];
+  .st.rates:update SPMA:SP mavg close,LPMA:LP mavg close from .st.rates;
+  .st.trend:0<val:(-).(last .st.rates)`SPMA`LPMA;
+  };
+
+.strat.init[];
+```
+**Strategy Calculation and Logic**
+```q
+.strat.calc:{[]
+  lastTime: (last .st.rates)`time;
+  data: asc .mkt.getProductHistoricRates[PRODUCT; 60; lastTime+00:01; .z.p];
+  data: select from data where time>lastTime;
+  if[not n:count data; :-15#.st.rates];
+
+  work: ((neg LP-n)#.st.rates)upsert data;
+  upd: (neg n)#update SPMA:SP mavg close,LPMA:LP mavg close from work;
+  trend: 0<val:(-).(last upd)`SPMA`LPMA;
+
+  if[trend~.st.trend;
+    `.st.rates upsert upd;
+    :-15#.st.rates];
+
+  if[.pos.open;
+    cover: `sell`buy[`sell~.pos.side];
+    .strat.cover[cover; QTY];
+    trade: `sell`buy[trend];
+    .strat.trade[trade; QTY];
+    .st.trend: trend;
+  ];
+
+  if[not .pos.open;
+    side: `sell`buy[trend];
+    .strat.trade[side; QTY];
+    .st.trend: trend;
+  ];
+
+  `.st.rates upsert upd;
+  -15#.st.rates};
+```
+Requests the latest pricing data (the above example is sampling 1 minute bars) and calculates the latest trend.
+If there is new pricing data, the rates table is updated with the latest info.
+If there is no change in the trend, the function exists.
+If there is a change in the trend, the function will check if a position is currently open.
+If there is no open position, a trade is executed based on the MVA crossover and the position info is stored.
+If there is an open position, it is covered (sell position covered by a buy and vice-versa), and a new position is opened.
+
+**Execution Functions**
+```q
+///
+// Places a strategy trade and books the position
+.strat.trade:{[side;qty]
+  ord:.ord.placeMarketOrder[PRODUCT;side;qty];
+  `.pos.trade upsert `id`trade_id`trade_side!(.pos.itr;ord`id;ord`side);
+  .pos.open:1b;
+  .pos.side:ord`side;
+  ord}
+
+///
+// Covers a strategy trade and clears the position
+.strat.cover:{[side;qty]
+  ord:.ord.placeMarketOrder[PRODUCT;side;qty];
+  `.pos.cover upsert `id`cover_id`cover_side!(.pos.itr;ord`id;ord`side);
+  .pos.itr+:1;
+  .pos.open:0b;
+  .pos.side:`;
+  ord}
+```
+**Starting Strategy**
+```q
+// Define the internal timer function
+.z.ts:.strat.calc;
+
+// Set the timer
+\t 60000
+```
+The strategy calculation function will begin polling as soon as the timer is set - it will continue to collect data and trigger trades as long as timer is enabled.
+*Strategy positions can be manually covered via* ```.strat.cover[buyOrSell;desiredQty]```
+This sample strategy uses 1m bars - so best to recalculate every minute, if using a longer interval, a longer timer period can be used.
+
+**Output**
+```q
+///
+// Evaluate PNL
+.strat.pnl:{[]
+  fls: .ord.getFills PRODUCT;
+  pos: 0!.pos.trade lj .pos.cover;
+  pxs: 0!update trade_id:id,cover_id:id from
+          select price:size wavg price,usd:sum usd_volume,size:sum size by id:order_id
+            from fls where order_id in raze(pos)`trade_id`cover_id;
+  mtx: (pos lj `trade_id xkey select trade_id,trade_price:price,trade_usd:usd from pxs) 
+        lj `cover_id xkey select cover_id,cover_price:price,cover_usd:usd from pxs;
+  pnl: update pnl:?[trade_side=`sell;trade_price-cover_price;cover_price-trade_price],
+        usd:?[trade_side=`sell;trade_usd-cover_usd;cover_usd-trade_usd] from mtx;
+  pnl};
+  
+.strat.pnl[]
+id trade_id trade_side cover_id  cover_side  trade_price trade_usd   cover_price cover_usd pnl     usd    
+----------------------------------------------------------------------------------------------------------
+0  xxxx     sell       xxxx      buy         7713.67     771367      6239.39     623939    1474.59 147428
+1  xxxx     buy        xxxx      sell        6238.27     623827      7645.06     764506    1406.79 140679 
+2  xxxx     sell       xxxx      buy         7645.05     764505      6400.48     640048    1244.58 124458 
+3  xxxx     buy        xxxx      sell        6401.23     640123      7097.08     709708    695.846 69584.6
+```
+Chart with trigger signals
+![trade chart](https://raw.githubusercontent.com/michaelsimonelli/qoinbase-q/master/chart.png)
 
 ## extendPy
 *BETA library to extend the functionality of embedPy.*
