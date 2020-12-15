@@ -354,9 +354,9 @@
 //  stp           | `dc
 //  type          | `limit
 //  time_in_force | `GTT
-//  expire_time   | 2019.05.23T11:14:47.000
+//  expire_time   | 2019.05.23D11:14:47.000000
 //  post_only     | 1b
-//  created_at    | 2019.05.22T11:14:47.335
+//  created_at    | 2019.05.22D11:14:47.335000
 //  fill_fees     | 0f
 //  filled_size   | 0f
 //  executed_value| 0f
@@ -403,7 +403,7 @@
 //  type          | `limit
 //  time_in_force | `GTC
 //  post_only     | 0b
-//  created_at    | 2019.06.08T06:39:02.138
+//  created_at    | 2019.06.08D06:39:02.138000
 //  fill_fees     | 0f
 //  filled_size   | 0f
 //  executed_value| 0f
@@ -452,7 +452,7 @@
 //  type          | `limit
 //  time_in_force | `GTC
 //  post_only     | 0b
-//  created_at    | 2019.06.08T06:43:54.985
+//  created_at    | 2019.06.08D06:43:54.985000
 //  fill_fees     | 0f
 //  filled_size   | 0f
 //  executed_value| 0f

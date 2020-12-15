@@ -121,7 +121,7 @@
 // example:
 // q) .mkt.getProductHistoricRates[`BTCUSD] (defaults 1 min candles, ending now, 350 data points)
 // q) .mkt.getProductHistoricRates[`BTCUSD; 60]
-// q) .mkt.getProductHistoricRates[`BTCUSD; 900; 2018.04.01T08:00:00.000; 2018.04.01T09:00:00.000] 
+// q) .mkt.getProductHistoricRates[`BTCUSD; 900; 2018.04.01D08:00:00.000000; 2018.04.01D09:00:00.000000] 
 //
 // parameters: *USES EXPANDABLE PARAMETERS*
 // sym         [symbol/string]      - ccy pair/product
@@ -146,12 +146,12 @@
 //  lib - https://github.com/michaelsimonelli/qoinbase-py/blob/master/cbpro/public_client.py#L162
 .mkt.getProductHistoricRates: .ut.xfunc {[x];
   pid: .ref.getPID .ut.xposi[x; 0; `sym];
-  granularity: .ut.default[x 1; `];
-  start:       .ut.default[x 2; `];
-  end:         .ut.default[x 3; `];
+  granularity: .ut.default[x 1; .py.none];
+  start:       .ut.default[x 2; .py.none];
+  end:         .ut.default[x 3; .py.none];
   kwargs: .ut.kwargs.pop[`granularity`start`end; (granularity;start;end); (::;.ut.q2iso;.ut.q2iso)];
   res: .cli.MKT.get_product_historic_rates[pid; pykwargs kwargs];
-  rates: `time`low`high`open`close`volume!flip "zfffff"$/:.[res; (::; 0); .scm.fn.epoch];
+  rates: `time`low`high`open`close`volume!flip "pfffff"$/:.[res; (::; 0); .scm.fn.epoch];
   flip rates};
 
 ///

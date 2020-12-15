@@ -22,9 +22,10 @@
 
 .scm.fn.string:{s:.ut.toStr'[x];?[s like "::";(count x)#enlist "";s]};
 .scm.fn.qtime:{.scm.fn[$[(abs type x) in 5 6 7 8 9h; `epoch; `iso]]x};
-.scm.fn.epoch:{if[.ut.isList x; .z.s'[x]]; `datetime$(x % 86400) - 10957f};
+.scm.fn.epoch:{if[.ut.isList x; .z.s'[x]]; "P"$string x};
+.scm.fn.iso:{if[(not .ut.isStr x) and .ut.isList x; :.z.s'[x]]; if[not .ut.isNull t:"P"$x;:t]; "P"$-1_x};
 .scm.fn.id:{.scm.fn[$[any i:(.scm.guid;.scm.long)@\:x;first `guid`long where i;`symbol]]x};
-.scm.fn.iso:{if[(not .ut.isStr x) and .ut.isList x; :.z.s'[x]]; if[not .ut.isNull t:"Z"$x;:t]; "Z"$-1_x};
+
 .scm.fn,:(raze {enlist[x`sym]!enlist[.scm.tryCast[x`chr]]} each select sym,chr from .ut.typ.ref where int < 0);
 
 .scm.ref: .ut.table (
