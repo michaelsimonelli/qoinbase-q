@@ -24,7 +24,7 @@
   env: .ut.xposi[x; 0; `env];
   url: .api.endpoint[env];  
 
-  cli: .cli.priv.addFuncs .cli.PublicClient[url];
+  cli: .cli.priv.addFuncs .cbpro.PublicClient[url];
 
   cli};
 

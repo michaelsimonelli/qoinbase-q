@@ -23,7 +23,7 @@
 .scm.canCast:{[x;y] .[{nw:x$"";if[not x in"BGXCS";nw:(min 0#;max 0#;::)@\:nw];$[not any nw in x$11#y;$[11<count y;not any nw in x$y;1b];@[{x$y;1b}[x];y;0b]]};(x;y);0b]};
 
 
-.scm.fn.string:{.sim.s:s:.ut.toStr'[x];?[s like "::";(count x)#enlist "";s]};
+.scm.fn.string:{s:.ut.toStr'[x];?[s like "::";(count x)#enlist "";s]};
 .scm.fn.qtime:{.scm.fn[$[(abs type x) in 5 6 7 8 9h; `epoch; `iso]]x};
 .scm.fn.epoch:{if[.ut.isList x; .z.s'[x]]; "P"$string x};
 .scm.fn.iso:{if[(not .ut.isStr x) and .ut.isList x; :.z.s'[x]]; if[not .ut.isNull t:"P"$x;:t]; "P"$-1_x};
